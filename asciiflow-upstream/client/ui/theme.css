@@ -1,0 +1,91 @@
+/* ==========================================================================
+   ASCIIFlow Terminal Theme — Nord palette
+   https://www.nordtheme.com/docs/colors-and-palettes/
+
+   Polar Night:  #2e3440  #3b4252  #434c5e  #4c566a
+   Snow Storm:   #d8dee9  #e5e9f0  #eceff4
+   Frost:        #8fbcbb  #88c0d0  #81a1c1  #5e81ac
+   Aurora:       #bf616a  #d08770  #ebcb8b  #a3be8c  #b48ead
+   ========================================================================== */
+
+:root {
+  /* Colors — neutral light (no Nord blue tint) */
+  --color-bg: #ffffff;
+  --color-bg-raised: #f5f5f5;
+  --color-bg-hover: #ebebeb;
+  --color-bg-active: #5b4cdb;
+  --color-bg-active-text: #ffffff;
+  --color-border: #d0d0d0;
+  --color-border-light: #e8e8e8;
+  --color-text: #1a1a1a;
+  --color-text-muted: #666666;
+  --color-accent: #5b4cdb;
+  --color-brand: #5b4cdb;
+  --color-success: #2d7a2d;
+  --color-warning: #9a6700;
+  --color-danger: #c42b2b;
+  --color-purple: #7c4dbd;
+  --color-orange: #c45a2d;
+  --color-cyan: #0e7490;
+  --color-overlay: rgba(0, 0, 0, 0.35);
+
+  /* Canvas */
+  --color-canvas-bg: #ffffff;
+  --color-canvas-grid: #e4e4e4;
+  --color-canvas-text: #1a1a1a;
+  --color-canvas-highlight: #f0f0f0;
+  --color-canvas-selection: #d4cff8;
+  --color-canvas-overlap: #f8d4cf;
+
+  /* Spacing */
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 8px;
+  --space-lg: 12px;
+  --space-xl: 24px;
+
+  /* Typography */
+  --font-mono: "Source Code Pro", monospace;
+  --font-size: 15px;
+
+  /* Borders — 1px solid, no rounded corners */
+  --border: 1px solid var(--color-border);
+  --border-light: 1px solid var(--color-border-light);
+}
+
+html,
+body,
+#root {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+:root.dark {
+  /* Colors — dark (Polar Night base) */
+  --color-bg: #2e3440;
+  --color-bg-raised: #3b4252;
+  --color-bg-hover: #434c5e;
+  --color-bg-active: #5e81ac;
+  --color-bg-active-text: #eceff4;
+  --color-border: #4c566a;
+  --color-border-light: #3b4252;
+  --color-text: #d8dee9;
+  --color-text-muted: #7b88a1;
+  --color-accent: #88c0d0;
+  --color-brand: #88c0d0;
+  --color-success: #a3be8c;
+  --color-warning: #ebcb8b;
+  --color-danger: #bf616a;
+  --color-purple: #b48ead;
+  --color-orange: #d08770;
+  --color-cyan: #88c0d0;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Canvas */
+  --color-canvas-bg: #2e3440;
+  --color-canvas-grid: #3b4252;
+  --color-canvas-text: #d8dee9;
+  --color-canvas-highlight: #3b4252;
+  --color-canvas-selection: #434c5e;
+  --color-canvas-overlap: #5e4343;
+}

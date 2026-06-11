@@ -1,0 +1,24 @@
+name: Test
+
+on: pull_request
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Bazelisk
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+          sudo chmod +x /usr/local/bin/bazel
+
+      - name: Install Playwright Chromium
+        run: npx playwright@1.58.2 install --with-deps chromium
+
+      - name: Run tests and build
+        run: bazel test //common:all //client:all //e2e:all --remote_cache= --bes_backend= --bes_results_url= && bazel build //client:site --remote_cache= --bes_backend= --bes_results_url=
+        timeout-minutes: 10

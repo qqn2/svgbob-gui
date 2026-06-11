@@ -1,0 +1,124 @@
+.preview {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  background: var(--color-bg-raised, #f5f5f5);
+  border-left: 1px solid var(--color-border, #d0d0d0);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-bottom: 1px solid var(--color-border, #d0d0d0);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-weight: 500;
+  color: var(--color-text, #1a1a1a);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.actionBtn {
+  font-size: 10px !important;
+  padding: 2px 7px !important;
+  min-height: 0 !important;
+}
+
+.svgMount {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.dark .svgMount {
+  background: #1a1a24;
+}
+
+.svgMountDark {
+  filter: invert(1) hue-rotate(180deg);
+  background: #0d0d14 !important;
+}
+
+.svgMount :global(svg) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.errorBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 10px 0;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8b1a1a;
+  background: #fdeaea;
+  border: 1px solid #e8a8a8;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.errorHint {
+  color: #6a4040;
+  font-size: 10px;
+}
+
+.dark .errorBanner {
+  color: #f8b4b4;
+  background: #3a2020;
+  border-color: #6a3030;
+}
+
+.dark .errorHint {
+  color: #c09090;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 22px;
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-fg-muted, #6a6a80);
+  border-top: 1px solid var(--color-border, #d0d0d0);
+  flex-shrink: 0;
+}
+
+@media print {
+  .header,
+  .footer {
+    display: none;
+  }
+
+  .preview {
+    border: none;
+    height: auto;
+  }
+
+  .svgMount {
+    padding: 0;
+    overflow: visible;
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "asciiflow2",
+  "main": "index.js",
+  "icon": "images/favicon.png",
+  "imports": {
+    "#asciiflow/*": "./*"
+  },
+  "scripts": {
+    "start": "electron ."
+  },
+  "type": "module",
+  "dependencies": {
+    "@playwright/test": "^1.49.0",
+    "playwright": "^1.49.0",
+    "playwright-core": "^1.49.0",
+    "@types/chai": "^4.3.12",
+    "@types/diff": "^5.0.9",
+    "@types/json-stable-stringify": "^1.0.36",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^22.0.0",
+    "@types/pako": "^1.0.7",
+    "@types/react": "^16.14.56",
+    "@types/react-dom": "^16.9.24",
+    "@types/react-router": "^5.1.20",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/sinon": "^17.0.3",
+    "@types/uuid": "^8.3.4",
+    "chai": "^4.4.1",
+    "electron": "^29.0.1",
+    "http-server": "^14.1.1",
+    "js-base64": "^3.7.7",
+    "json-stable-stringify": "^1.1.1",
+    "mocha": "^11.0.0",
+    "pako": "^1.0.11",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-router": "^5.3.4",
+    "react-router-dom": "^5.3.4",
+    "sinon": "^18.0.0",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.7.0",
+    "svgbob-wasm": "^1.0.0",
+    "uuid": "^8.3.2",
+    "zustand": "^4.5.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss@<7.0.36": ">=7.0.36",
+      "postcss@<8.4.31": ">=8.4.31",
+      "minimist@<0.2.1": ">=0.2.1",
+      "minimatch@<3.0.5": ">=3.0.5",
+      "minimist@<0.2.4": ">=0.2.4"
+    }
+  }
+}
