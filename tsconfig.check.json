@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "strict": false,
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": [
+    "asciiflow-upstream/client/vite-env.d.ts",
+    "asciiflow-upstream/client/render_errors.ts",
+    "asciiflow-upstream/client/renderer.ts",
+    "asciiflow-upstream/client/layer_placement.ts",
+    "asciiflow-upstream/client/snippets.ts",
+    "asciiflow-upstream/client/svgbob_storage.ts",
+    "asciiflow-upstream/client/text_utils.ts",
+    "asciiflow-upstream/client/draw/place_block.ts",
+    "asciiflow-upstream/client/**/*.test.ts"
+  ]
+}

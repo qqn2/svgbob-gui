@@ -1,0 +1,9 @@
+node_modules/
+asciiflow-upstream/node_modules/
+dist/
+*.local
+
+# Cursor agent session notes (local only)
+agent.md
+agent_orchestrator.md
+previous_agent.md
