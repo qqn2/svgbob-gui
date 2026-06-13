@@ -1,4 +1,6 @@
 import * as React from "react";
+import { ExportDialog } from "#asciiflow/client/ExportDialog";
+import { exportLayer, renderAsciiToSvg } from "#asciiflow/client/export_engine";
 import { store, useAppStore } from "#asciiflow/client/store";
 import { layerToText } from "#asciiflow/client/text_utils";
 import {
@@ -10,8 +12,6 @@ import {
 import { buildShareUrl } from "#asciiflow/client/svgbob_storage";
 import { Button, Toast } from "#asciiflow/client/ui/components";
 import styles from "#asciiflow/client/svg_preview.module.css";
-
-const DARK_PREVIEW_KEY = "svgbob-gui:dark-preview";
 
 function parseSvgDims(svg: string): string | null {
   const m = svg.match(/<svg[^>]*\swidth="([^"]+)"[^>]*\sheight="([^"]+)"/);
@@ -34,32 +34,16 @@ async function copyText(text: string): Promise<void> {
   }
 }
 
-function downloadBlob(content: string, filename: string, mime: string): void {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export function SvgPreview() {
   const canvasVersion = useAppStore((s) => s.canvasVersion);
+  const route = useAppStore((s) => s.route);
   const [svg, setSvg] = React.useState("");
-  const [ascii, setAscii] = React.useState("");
+  const [sourceAscii, setSourceAscii] = React.useState("");
   const [ms, setMs] = React.useState<number | null>(null);
   const [dims, setDims] = React.useState<string | null>(null);
   const [ready, setReady] = React.useState(false);
   const [initError, setInitError] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
-  const [darkPreview, setDarkPreview] = React.useState(() => {
-    try {
-      return localStorage.getItem(DARK_PREVIEW_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
   const [toast, setToast] = React.useState("");
 
   React.useEffect(() => {
@@ -67,29 +51,41 @@ export function SvgPreview() {
       .then(() => {
         setReady(true);
         setInitError(null);
+        store.setRenderState("ok");
       })
       .catch((err) => {
         const msg =
           err instanceof Error ? err.message : getRendererInitError() ?? "WASM init failed";
         setInitError(msg);
         setReady(false);
+        store.setRenderState("error");
       });
   }, []);
 
   React.useEffect(() => {
     if (!ready || !isRendererReady()) return;
     const id = window.setTimeout(() => {
-      const text = layerToText(store.currentCanvas.combined);
-      setAscii(text);
+      const preview = layerToText(store.currentCanvas.combined);
+      const source = layerToText(store.currentCanvas.committed);
+      setSourceAscii(source);
       setRenderError(null);
       setSvg("");
+
+      if (!preview.trim()) {
+        setMs(null);
+        setDims(null);
+        store.setRenderState("ok");
+        return;
+      }
+
       const t0 = performance.now();
-      renderAsync(text)
+      renderAsync(preview)
         .then((result) => {
           setMs(performance.now() - t0);
           setSvg(result);
           setDims(parseSvgDims(result));
           setRenderError(null);
+          store.setRenderState("ok");
         })
         .catch((err) => {
           setMs(null);
@@ -98,22 +94,14 @@ export function SvgPreview() {
           setRenderError(
             err instanceof Error ? err.message : "svgbob render failed"
           );
+          store.setRenderState("error");
         });
     }, 180);
     return () => window.clearTimeout(id);
-  }, [canvasVersion, ready]);
+  }, [canvasVersion, ready, route]);
 
   const showError = initError ?? renderError;
-
-  const toggleDarkPreview = () => {
-    const next = !darkPreview;
-    setDarkPreview(next);
-    try {
-      localStorage.setItem(DARK_PREVIEW_KEY, next ? "1" : "0");
-    } catch {
-      // ignore
-    }
-  };
+  const stats = asciiStats(sourceAscii);
 
   const notify = async (fn: () => Promise<void> | void, ok: string) => {
     try {
@@ -124,36 +112,50 @@ export function SvgPreview() {
     }
   };
 
-  const copyAscii = () => notify(() => copyText(ascii), "ASCII copied");
-  const copySvg = () => notify(() => copyText(svg), "SVG copied");
+  const copyAscii = () => notify(() => copyText(sourceAscii), "ASCII copied");
+  const copySvg = () =>
+    notify(async () => {
+      if (!sourceAscii || showError) throw new Error("Nothing to copy");
+      await copyText(renderAsciiToSvg(sourceAscii));
+    }, "SVG copied");
 
-  const exportSvg = () => {
-    if (!svg || showError) return;
-    downloadBlob(svg, "diagram.svg", "image/svg+xml;charset=utf-8");
-    setToast("diagram.svg downloaded");
-  };
+  const exportSvg = () =>
+    notify(async () => {
+      if (!sourceAscii || showError) return;
+      await exportLayer(store.currentCanvas.committed, {
+        format: "svg",
+        scale: 1,
+        background: "white",
+        filenameBase: "diagram",
+      });
+      setToast("diagram.svg downloaded");
+    }, "diagram.svg downloaded");
 
-  const exportTxt = () => {
-    if (!ascii) return;
-    downloadBlob(ascii, "diagram.txt", "text/plain;charset=utf-8");
-    setToast("diagram.txt downloaded");
-  };
+  const exportTxt = () =>
+    notify(async () => {
+      if (!sourceAscii) return;
+      await exportLayer(store.currentCanvas.committed, {
+        format: "txt",
+        scale: 1,
+        background: "white",
+        filenameBase: "diagram",
+      });
+      setToast("diagram.txt downloaded");
+    }, "diagram.txt downloaded");
 
   const shareLink = () =>
     notify(async () => {
-      const url = buildShareUrl(ascii);
+      const url = buildShareUrl(sourceAscii);
       if (!url) throw new Error("Diagram too large to share via URL");
       await copyText(url);
     }, "Share link copied");
-
-  const stats = asciiStats(ascii);
 
   return (
     <aside className={styles.preview} aria-label="svgbob SVG preview">
       <header className={styles.header}>
         <span className={styles.title}>svgbob</span>
         <div className={styles.actions}>
-          <Button variant="ghost" className={styles.actionBtn} onClick={copyAscii} title="Copy ASCII">
+          <Button variant="ghost" className={styles.actionBtn} onClick={copyAscii} title="Copy committed ASCII">
             ASCII
           </Button>
           <Button variant="ghost" className={styles.actionBtn} onClick={exportTxt} title="Download diagram.txt">
@@ -163,8 +165,8 @@ export function SvgPreview() {
             variant="ghost"
             className={styles.actionBtn}
             onClick={copySvg}
-            title="Copy SVG markup"
-            disabled={!svg || !!showError}
+            title="Copy SVG from committed ASCII"
+            disabled={!sourceAscii || !!showError}
           >
             SVG
           </Button>
@@ -173,20 +175,20 @@ export function SvgPreview() {
             className={styles.actionBtn}
             onClick={exportSvg}
             title="Download diagram.svg"
-            disabled={!svg || !!showError}
+            disabled={!sourceAscii || !!showError}
           >
             .svg
           </Button>
+          <ExportDialog
+            getLayer={() => store.currentCanvas.committed}
+            trigger={
+              <Button variant="ghost" className={styles.actionBtn} title="Export dialog" disabled={!sourceAscii}>
+                export…
+              </Button>
+            }
+          />
           <Button variant="ghost" className={styles.actionBtn} onClick={shareLink} title="Copy shareable URL">
             link
-          </Button>
-          <Button
-            variant="ghost"
-            className={styles.actionBtn}
-            onClick={toggleDarkPreview}
-            title="Invert preview colors"
-          >
-            {darkPreview ? "light" : "dark"}
           </Button>
         </div>
       </header>
@@ -200,12 +202,12 @@ export function SvgPreview() {
         </div>
       ) : null}
       <div
-        className={[styles.svgMount, darkPreview ? styles.svgMountDark : ""].filter(Boolean).join(" ")}
+        className={styles.svgMount}
         dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
       />
       <footer className={styles.footer}>
         <span>
-          {stats.lines} lines · {stats.chars} chars
+          {stats.lines} lines · {stats.chars} chars (committed)
         </span>
         <span>
           {showError ? "render failed" : ms != null ? `${ms.toFixed(1)}ms` : "—"}

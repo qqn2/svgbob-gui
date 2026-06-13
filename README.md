@@ -44,14 +44,20 @@ make svg-all   # all examples/*.txt and docs/engdoc/img/ascii/*.txt
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  toolbar (files · tools · blocks · export · undo · view)    │
+│  toolbar (svgbob · tools · zoom · blocks · export · view)   │
 ├──────────────────────────┬──────────────────────────────────┤
 │  ASCII canvas            │  svgbob SVG preview              │
-│  (AsciiFlow grid)        │  copy · export · share link      │
+│  (monospace grid)        │  copy · export · link            │
 │                          │                                  │
-└──────────────────────────┴──────────────────────────────────┘
+├──────────────────────────┴──────────────────────────────────┤
+│  status bar (cell · tool · zoom · lines/chars · WASM state) │
+└─────────────────────────────────────────────────────────────┘
          ▲ drag handle between panes (width saved in localStorage)
 ```
+
+**View** panel: theme (`light` / `light grey` / `dark`), UI scale (S/M/L), grid toggle. Default theme is **light grey** (professional chrome, white canvas). Application chrome uses system UI fonts; the canvas and ASCII use a monospace stack (`Cascadia Mono`, `Consolas`, …).
+
+**Canvas zoom** (`−` / `zoom%` / `+` / `fit` in the toolbar, or Ctrl/Cmd+scroll) applies to the editor viewport and is persisted per drawing.
 
 ### Tools (toolbar)
 
@@ -81,7 +87,7 @@ Open **blocks** in the toolbar. Click a template (pipeline, register, mux, adder
 
 1. A **ghost** of the block follows the cursor over the canvas.
 2. **Click** to stamp it at that grid position (repeat for multiple copies).
-3. **Esc** cancels placement; **R** rotate 90°, **H**/**V** flip; red ghost = overlap with existing art.
+3. **Esc** cancels placement; **R** rotate 90°, **H**/**V** flip; red ghost = overlap — **click does not commit** on overlap.
 4. Parametric blocks (box, bus, SRAM, …) prompt for label / bus width / clock name before placing.
 
 Snippets use **plain ASCII** only so [svgbob](https://github.com/ivanceras/svgbob) parses them reliably. Edit labels in place with **text** or **select** after placing.
@@ -90,14 +96,13 @@ Snippets use **plain ASCII** only so [svgbob](https://github.com/ivanceras/svgbo
 
 | Control | Action |
 |---------|--------|
-| Copy ASCII | Plain-text diagram for source, markdown, or `*.txt` in `docs/` |
-| **.txt** | Download `diagram.txt` for commit beside RTL / eng docs |
-| Copy SVG | Vector markup for paste into tools that accept SVG |
-| **.svg** | Download `diagram.svg` |
-| **link** | Copy `#/bob/<base64url>` share URL (ASCII ≤ 6000 chars) |
-| **dark** | Toggle preview background (saved in `localStorage`) |
+| Copy ASCII | **Committed** plain-text diagram (ghost placement excluded) |
+| **.txt** | Download committed `diagram.txt` |
+| Copy SVG / **.svg** | SVG from **committed** ASCII (not live ghost preview) |
+| **export…** | Dialog: `.txt` / `.svg` / `.png`, scale 1×/2×/4×, white or transparent background |
+| **link** | Copy `#/bob/<base64url>` share URL from committed ASCII (≤ 6000 chars) |
 
-Render path: **svgbob-wasm** in the browser only (debounced ~180 ms). WASM failures show an inline error banner — diagram ASCII on the canvas is unchanged.
+Live preview renders `layerToText(combined)` — committed diagram plus placement ghosts — through **svgbob-wasm** (debounced ~180 ms). Copy, download, and share use the **committed** layer only.
 
 ### Files panel
 
@@ -112,11 +117,12 @@ AsciiFlow **local drawings** are stored in `localStorage` under per-drawing keys
          ▼                            ▼
    CanvasStore  ◄── Zustand canvasVersion bump
    (Layer grid)         │
-         │              │  layerToText(combined)
+         │              │  layerToText(combined) → live preview
+         │              │  layerToText(committed) → export / share
          │              ▼
          │         renderer.ts  →  svgbob-wasm
          │              │
-         └──────────────┴──► SvgPreview (copy / export / share)
+         └──────────────┴──► SvgPreview + ExportDialog (copy / export / share)
 ```
 
 | Layer | Location | Role |
@@ -127,7 +133,8 @@ AsciiFlow **local drawings** are stored in `localStorage` under per-drawing keys
 | **View** | `asciiflow-upstream/client/view.tsx` | Canvas paint (grid, selection, scratch highlight) |
 | **Bridge** | `asciiflow-upstream/client/text_utils.ts` | `layerToText` / `textToLayer` — grid ↔ multiline ASCII |
 | **Renderer** | `asciiflow-upstream/client/renderer.ts` | `svgbob-wasm` sync render (offline) |
-| **UI shell** | `Workspace.tsx`, `toolbar.tsx`, `svg_preview.tsx` | Split layout, docked toolbar, preview actions |
+| **UI shell** | `Workspace.tsx`, `toolbar.tsx`, `svg_preview.tsx`, `StatusBar.tsx` | Split layout, docked toolbar, preview + export dialog, status bar |
+| **Export** | `export_engine.ts`, `ExportDialog.tsx` | TXT/SVG/PNG from committed ASCII with scale/background |
 | **Sharing** | `svgbob_storage.ts`, `svgbob_bootstrap.ts` | Base64url encode/decode; `#/bob/…` route load |
 
 Vite root is `asciiflow-upstream/client/`; `#asciiflow` alias points at the upstream tree (`vite.config.ts` at repo root).
@@ -161,8 +168,8 @@ Vite root is `asciiflow-upstream/client/`; `#asciiflow` alias points at the upst
 | `package.json` | `npm run dev` / `build` / `preview` |
 | `dist/` | Production static build |
 | `src/` | Deprecated CodeMirror prototype — **do not extend** |
-| `previous_agent.md` | Original spec (superseded by AsciiFlow base) |
-| `agent.md` | Scope and implementation notes |
+| `previous_agent.md` | Original spec — **archived** |
+| `agent.md` | Original implementation notes — **archived** |
 
 ## Tips for hardware diagrams
 
@@ -175,8 +182,8 @@ Vite root is `asciiflow-upstream/client/`; `#asciiflow` alias points at the upst
 
 | Document | Purpose |
 |----------|---------|
-| [`agent.md`](./agent.md) | Feature checklist, pivot notes, build history |
+| [`agent.md`](./agent.md) | Archived feature checklist (CodeMirror era) |
 | [`agent_orchestrator.md`](./agent_orchestrator.md) | Multi-step build plan |
-| [`previous_agent.md`](./previous_agent.md) | Original CodeMirror + draw-tools spec (archived) |
+| [`previous_agent.md`](./previous_agent.md) | Archived CodeMirror + draw-tools spec |
 | [svgbob](https://github.com/ivanceras/svgbob) | ASCII-to-SVG grammar and CLI |
 | [AsciiFlow](https://github.com/lewish/asciiflow) | Upstream canvas editor |

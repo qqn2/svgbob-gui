@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="Description"
-      content="Infinite ASCII diagrams, save to Google Drive, resize, freeform draw, and export straight to text/html."
+      content="svgbob GUI — offline ASCII block-diagram editor with live SVG preview for RTL hardware documentation."
     />
     <meta
       name="viewport"
@@ -15,29 +15,11 @@
     <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
     <link rel="shortcut icon" sizes="196x196" href="/public/favicon.png" />
 
-    <title>svgbob + ASCIIFlow</title>
+    <title>svgbob GUI</title>
     <style>
-      @font-face {
-        font-family: "Source Code Pro";
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: url("/public/fonts/SourceCodePro-Regular.woff2") format("woff2");
-      }
-      @font-face {
-        font-family: "Source Code Pro";
-        font-style: normal;
-        font-weight: 500;
-        font-display: swap;
-        src: url("/public/fonts/SourceCodePro-Medium.woff2") format("woff2");
-      }
-
-      * {
-        font-family: "Source Code Pro", monospace;
-      }
-
       body {
-        margin: 0px;
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
       #logo-interstitial {

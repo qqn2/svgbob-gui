@@ -2,6 +2,11 @@ import { ASCII, UNICODE } from "#asciiflow/client/constants";
 import { ExportPanel } from "#asciiflow/client/export";
 import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
+import { layerToText } from "#asciiflow/client/text_utils";
+import {
+  ThemeMode,
+  UI_FONT_SCALES,
+} from "#asciiflow/client/theme_settings";
 import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
 import {
   Button,
@@ -12,7 +17,7 @@ import {
 } from "#asciiflow/client/ui/components";
 import styles from "#asciiflow/client/toolbar.module.css";
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHistory } from "react-router";
 
 // ---------------------------------------------------------------------------
@@ -68,7 +73,6 @@ function stopKeys(e: React.KeyboardEvent) {
 // ---------------------------------------------------------------------------
 
 export function Toolbar() {
-  const darkMode = useAppStore((s) => s.darkMode);
   const route = useAppStore((s) => s.route);
   const selectedToolMode = useAppStore((s) => s.selectedToolMode);
   const altPressed = useAppStore((s) => s.altPressed);
@@ -91,16 +95,11 @@ export function Toolbar() {
     <div className={styles.topBar}>
       {/* ── Primary row ── */}
       <div className={styles.topRow}>
-        {/* Branding — colorful "af" */}
-        <a
-          href="https://github.com/lewish/asciiflow"
-          className={styles.brand}
-          target="_blank"
-          rel="noopener"
-        >
-          <span style={{ color: "var(--color-cyan)" }}>a</span>
-          <span style={{ color: "var(--color-purple)" }}>f</span>
-        </a>
+        {/* Branding */}
+        <span className={styles.brand} title="svgbob GUI — offline RTL block diagrams">
+          <span style={{ color: "var(--color-brand)" }}>svg</span>
+          <span style={{ color: "var(--color-accent)" }}>bob</span>
+        </span>
 
         <Sep />
 
@@ -139,6 +138,8 @@ export function Toolbar() {
             })}
           </>
         )}
+
+        {!isShared ? <ZoomCluster /> : null}
 
         <Sep />
 
@@ -254,34 +255,71 @@ function Sep() {
   return <span className={styles.sep}>{"\u2502"}</span>;
 }
 
-// ---------------------------------------------------------------------------
-// View panel — zoom, recenter, dark/light toggle with labels
-// ---------------------------------------------------------------------------
-
-function ViewPanel() {
-  const darkMode = useAppStore((s) => s.darkMode);
-  const showGrid = useAppStore((s) => s.showGrid);
-  const canvasVersion = useAppStore((s) => s.canvasVersion);
+function ZoomCluster() {
+  useAppStore((s) => s.canvasVersion);
   const zoom = store.currentCanvas.zoom;
   const zoomPct = Math.round(zoom * 100);
 
+  const stepZoom = (delta: number) => store.stepZoom(delta);
+
   return (
-    <div className={styles.viewPanel}>
-      <span className={styles.viewLabel}>
-        zoom: <span className={styles.viewValue}>{zoomPct}%</span>
-      </span>
-      <ActionBtn
-        color="var(--color-cyan)"
-        onClick={() => store.currentCanvas.resetZoom()}
-      >
-        reset
+    <>
+      <ActionBtn color="var(--color-cyan)" onClick={() => stepZoom(-0.2)} title="Zoom out">
+        −
+      </ActionBtn>
+      <span className={styles.zoomLabel}>{zoomPct}%</span>
+      <ActionBtn color="var(--color-cyan)" onClick={() => stepZoom(0.2)} title="Zoom in">
+        +
       </ActionBtn>
       <ActionBtn
         color="var(--color-orange)"
-        onClick={() => store.currentCanvas.recenter()}
+        onClick={() => store.fitDiagram()}
+        title="Fit diagram to canvas"
       >
-        recenter
+        fit
       </ActionBtn>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// View panel — theme, UI scale, grid
+// ---------------------------------------------------------------------------
+
+function ViewPanel() {
+  const themeMode = useAppStore((s) => s.themeMode);
+  const uiFontScale = useAppStore((s) => s.uiFontScale);
+  const showGrid = useAppStore((s) => s.showGrid);
+
+  const themes: Array<{ id: ThemeMode; label: string }> = [
+    { id: "light", label: "light" },
+    { id: "light-grey", label: "grey" },
+    { id: "dark", label: "dark" },
+  ];
+
+  return (
+    <div className={styles.viewPanel}>
+      <span className={styles.viewLabel}>theme</span>
+      {themes.map((t) => (
+        <ActionBtn
+          key={t.id}
+          color={themeMode === t.id ? "var(--color-accent)" : "var(--color-text-muted)"}
+          onClick={() => store.setThemeMode(t.id)}
+        >
+          {t.label}
+        </ActionBtn>
+      ))}
+      <span className={styles.sep}>{"\u2502"}</span>
+      <span className={styles.viewLabel}>UI</span>
+      {UI_FONT_SCALES.map((s) => (
+        <ActionBtn
+          key={s.id}
+          color={uiFontScale === s.value ? "var(--color-accent)" : "var(--color-text-muted)"}
+          onClick={() => store.setUiFontScale(s.value)}
+        >
+          {s.label}
+        </ActionBtn>
+      ))}
       <span className={styles.sep}>{"\u2502"}</span>
       <span className={styles.viewLabel}>
         grid: <span className={styles.viewValue}>{showGrid ? "on" : "off"}</span>
@@ -293,14 +331,11 @@ function ViewPanel() {
         {showGrid ? "hide" : "show"}
       </ActionBtn>
       <span className={styles.sep}>{"\u2502"}</span>
-      <span className={styles.viewLabel}>
-        {darkMode ? "dark" : "light"} mode
-      </span>
       <ActionBtn
-        color="var(--color-warning)"
-        onClick={() => store.setDarkMode(!darkMode)}
+        color="var(--color-orange)"
+        onClick={() => store.currentCanvas.recenter()}
       >
-        {darkMode ? "go light" : "go dark"}
+        recenter
       </ActionBtn>
     </div>
   );

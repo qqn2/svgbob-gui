@@ -3,8 +3,8 @@
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  background: var(--color-bg-raised, #f5f5f5);
-  border-left: 1px solid var(--color-border, #d0d0d0);
+  background: var(--color-bg-raised);
+  border-left: var(--border);
 }
 
 .header {
@@ -13,16 +13,16 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  border-bottom: 1px solid var(--color-border, #d0d0d0);
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  border-bottom: var(--border);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 
 .title {
-  font-weight: 500;
-  color: var(--color-text, #1a1a1a);
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .actions {
@@ -32,9 +32,10 @@
 }
 
 .actionBtn {
-  font-size: 10px !important;
+  font-size: calc(10px * var(--ui-font-scale, 1)) !important;
   padding: 2px 7px !important;
   min-height: 0 !important;
+  font-family: var(--font-ui) !important;
 }
 
 .svgMount {
@@ -44,16 +45,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: #ffffff;
-}
-
-.dark .svgMount {
-  background: #1a1a24;
-}
-
-.svgMountDark {
-  filter: invert(1) hue-rotate(180deg);
-  background: #0d0d14 !important;
+  background: var(--color-canvas-bg);
 }
 
 .svgMount :global(svg) {
@@ -68,28 +60,22 @@
   gap: 4px;
   margin: 8px 10px 0;
   padding: 8px 10px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: #8b1a1a;
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  color: var(--color-danger);
   background: #fdeaea;
   border: 1px solid #e8a8a8;
-  border-radius: 4px;
   flex-shrink: 0;
 }
 
 .errorHint {
-  color: #6a4040;
-  font-size: 10px;
+  color: var(--color-text-muted);
+  font-size: calc(10px * var(--ui-font-scale, 1));
 }
 
 .dark .errorBanner {
-  color: #f8b4b4;
   background: #3a2020;
   border-color: #6a3030;
-}
-
-.dark .errorHint {
-  color: #c09090;
 }
 
 .footer {
@@ -99,10 +85,10 @@
   gap: 12px;
   height: 22px;
   padding: 0 12px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--color-fg-muted, #6a6a80);
-  border-top: 1px solid var(--color-border, #d0d0d0);
+  font-family: var(--font-ui);
+  font-size: calc(10.5px * var(--ui-font-scale, 1));
+  color: var(--color-text-muted);
+  border-top: var(--border);
   flex-shrink: 0;
 }
 

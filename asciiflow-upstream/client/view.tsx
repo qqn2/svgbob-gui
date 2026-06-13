@@ -1,4 +1,5 @@
 import * as constants from "#asciiflow/client/constants";
+import { Box } from "#asciiflow/client/common";
 import { FONT_SPEC, CHAR_BASELINE } from "#asciiflow/client/font";
 import { store, useAppStore, ToolMode } from "#asciiflow/client/store";
 import { Vector } from "#asciiflow/client/vector";
@@ -132,25 +133,9 @@ function render(canvas: HTMLCanvasElement) {
   const cssHeight = canvas.height / dpr;
   context.translate(cssWidth / 2 / zoom, cssHeight / 2 / zoom);
 
-  // Only render grid lines and cells that are visible.
-  const vp = getCanvasViewport();
-  const startOffset = screenToCell(new Vector(vp.left, vp.top)).subtract(
-    new Vector(constants.RENDER_PADDING_CELLS, constants.RENDER_PADDING_CELLS)
-  );
-  const endOffset = screenToCell(
-    new Vector(vp.left + cssWidth, vp.top + cssHeight)
-  ).add(new Vector(constants.RENDER_PADDING_CELLS, constants.RENDER_PADDING_CELLS));
-
-  startOffset.x = Math.max(
-    0,
-    Math.min(startOffset.x, constants.MAX_GRID_WIDTH)
-  );
-  endOffset.x = Math.max(0, Math.min(endOffset.x, constants.MAX_GRID_WIDTH));
-  startOffset.y = Math.max(
-    0,
-    Math.min(startOffset.y, constants.MAX_GRID_HEIGHT)
-  );
-  endOffset.y = Math.max(0, Math.min(endOffset.y, constants.MAX_GRID_HEIGHT));
+  const visible = visibleCellBox();
+  const startOffset = visible.topLeft();
+  const endOffset = visible.bottomRight();
 
   const colors = getColors();
 
@@ -316,6 +301,27 @@ function render(canvas: HTMLCanvasElement) {
     context.stroke();
   }
   renderedVersion++;
+}
+
+/** Cell bounding box currently visible in the canvas pane (matches paint culling). */
+export function visibleCellBox(): Box {
+  const vp = getCanvasViewport();
+  const startOffset = screenToCell(new Vector(vp.left, vp.top)).subtract(
+    new Vector(constants.RENDER_PADDING_CELLS, constants.RENDER_PADDING_CELLS)
+  );
+  const endOffset = screenToCell(
+    new Vector(vp.left + vp.width, vp.top + vp.height)
+  ).add(new Vector(constants.RENDER_PADDING_CELLS, constants.RENDER_PADDING_CELLS));
+
+  const start = new Vector(
+    Math.max(0, Math.min(startOffset.x, constants.MAX_GRID_WIDTH)),
+    Math.max(0, Math.min(startOffset.y, constants.MAX_GRID_HEIGHT))
+  );
+  const end = new Vector(
+    Math.max(0, Math.min(endOffset.x, constants.MAX_GRID_WIDTH)),
+    Math.max(0, Math.min(endOffset.y, constants.MAX_GRID_HEIGHT))
+  );
+  return new Box(start, end);
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   InputController,
 } from "#asciiflow/client/controller";
 import { Toolbar } from "#asciiflow/client/toolbar";
+import { StatusBar } from "#asciiflow/client/StatusBar";
 import { Workspace } from "#asciiflow/client/Workspace";
 import {
   loadFromBobRoute,
@@ -34,7 +35,7 @@ export interface IRouteProps {
 
 export const App = () => {
   const routeProps = useParams<IRouteProps>();
-  const darkMode = useAppStore((s) => s.darkMode);
+  const themeMode = useAppStore((s) => s.themeMode);
 
   // Sync route params into the store.
   React.useEffect(() => {
@@ -54,9 +55,10 @@ export const App = () => {
   }, [routeProps.share, routeProps.local, routeProps.encoded]);
 
   return (
-    <div className={[styles.app, darkMode ? "dark" : ""].join(" ")}>
+    <div className={styles.app} data-theme={themeMode}>
       <Toolbar />
       <Workspace {...inputController.getHandlerProps()} />
+      <StatusBar />
     </div>
   );
 };

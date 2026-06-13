@@ -192,6 +192,7 @@ export class Controller {
 
   public handleMove(position: Vector, e: EventWithModifierKeys) {
     const moveCell = screenToCell(position);
+    store.setCursorCell({ x: moveCell.x, y: moveCell.y });
 
     // First move event, make sure we don't blow up here.
     if (this.lastMoveCell == null) {

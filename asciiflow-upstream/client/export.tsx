@@ -1,3 +1,4 @@
+import { ExportDialog } from "#asciiflow/client/ExportDialog";
 import { ASCII, UNICODE } from "#asciiflow/client/constants";
 import styles from "#asciiflow/client/toolbar.module.css";
 import { DrawingId, store, useAppStore } from "#asciiflow/client/store";
@@ -100,6 +101,7 @@ export function ExportPanel({
     layerToText(store.canvas(drawingId).committed),
     exportConfig
   );
+  const committedAscii = layerToText(store.canvas(drawingId).committed);
 
   return (
     <>
@@ -166,6 +168,18 @@ export function ExportPanel({
             >
               [{previewOpen ? "close preview" : "preview"}]
             </button>
+            <ExportDialog
+              getLayer={() => store.currentCanvas.committed}
+              trigger={
+                <button
+                  className={styles.actionBtn}
+                  style={{ color: "var(--color-cyan)" }}
+                  type="button"
+                >
+                  [export diagram…]
+                </button>
+              }
+            />
           </div>
         </div>
         {previewOpen && (

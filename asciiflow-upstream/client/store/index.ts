@@ -7,6 +7,14 @@ import { DrawPlaceBlock } from "#asciiflow/client/draw/place_block";
 import { DrawSelect } from "#asciiflow/client/draw/select";
 import { DrawText } from "#asciiflow/client/draw/text";
 import { IExportConfig } from "#asciiflow/client/export";
+import {
+  ThemeMode,
+  applyThemeSettings,
+  loadThemeMode,
+  loadUiFontScale,
+  saveThemeMode,
+  saveUiFontScale,
+} from "#asciiflow/client/theme_settings";
 import { CanvasStore } from "#asciiflow/client/store/canvas";
 import {
   ArrayStringifier,
@@ -137,6 +145,10 @@ export interface AppState {
   exportConfig: IExportConfig;
   localDrawingIds: DrawingId[];
   darkMode: boolean;
+  themeMode: ThemeMode;
+  uiFontScale: number;
+  cursorCell: { x: number; y: number } | null;
+  renderState: "pending" | "ok" | "error";
   showGrid: boolean;
 
   // Bumped whenever a CanvasStore mutates, so React can re-render.
@@ -144,6 +156,8 @@ export interface AppState {
 }
 
 function initialState(): AppState {
+  const themeMode = loadThemeMode();
+  const uiFontScale = loadUiFontScale();
   return {
     route: DrawingId.local(null),
     selectedToolMode: ToolMode.BOX,
@@ -162,7 +176,11 @@ function initialState(): AppState {
       [],
       new ArrayStringifier(DrawingId.STRINGIFIER)
     ),
-    darkMode: readPersistent("darkMode", false),
+    darkMode: themeMode === "dark",
+    themeMode,
+    uiFontScale,
+    cursorCell: null,
+    renderState: "pending",
     showGrid: readPersistent("showGrid", true),
     canvasVersion: 0,
   };
@@ -170,10 +188,10 @@ function initialState(): AppState {
 
 export const useAppStore = create<AppState>(() => initialState());
 
-// Apply the dark class on initial load so CSS custom properties are correct
-// before the first React render.
+// Apply theme on initial load before the first React render.
 if (typeof document !== "undefined") {
-  document.documentElement.classList.toggle("dark", useAppStore.getState().darkMode);
+  const init = initialState();
+  applyThemeSettings(init.themeMode, init.uiFontScale);
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +262,7 @@ export const store = {
   },
   setRoute(value: DrawingId) {
     useAppStore.setState({ route: value });
+    notifyCanvas();
   },
 
   // Freeform character
@@ -317,17 +336,46 @@ export const store = {
     useAppStore.setState({ modifierKeys: value });
   },
 
-  // Dark mode (persistent)
+  // Dark mode (persistent) — legacy boolean; prefer themeMode
   get darkMode() {
     return useAppStore.getState().darkMode;
   },
   setDarkMode(value: boolean) {
-    // Toggle the class synchronously so CSS custom properties are available
-    // before React re-renders (getColors() reads them during render).
-    if (typeof document !== "undefined") {
-      document.documentElement.classList.toggle("dark", value);
-    }
-    setPersistent("darkMode", value);
+    store.setThemeMode(value ? "dark" : "light-grey");
+  },
+
+  get themeMode() {
+    return useAppStore.getState().themeMode;
+  },
+  setThemeMode(value: ThemeMode) {
+    const uiFontScale = useAppStore.getState().uiFontScale;
+    applyThemeSettings(value, uiFontScale);
+    useAppStore.setState({ themeMode: value, darkMode: value === "dark" });
+    saveThemeMode(value);
+  },
+
+  get uiFontScale() {
+    return useAppStore.getState().uiFontScale;
+  },
+  setUiFontScale(value: number) {
+    const themeMode = useAppStore.getState().themeMode;
+    applyThemeSettings(themeMode, value);
+    useAppStore.setState({ uiFontScale: value });
+    saveUiFontScale(value);
+  },
+
+  get cursorCell() {
+    return useAppStore.getState().cursorCell;
+  },
+  setCursorCell(value: { x: number; y: number } | null) {
+    useAppStore.setState({ cursorCell: value });
+  },
+
+  get renderState() {
+    return useAppStore.getState().renderState;
+  },
+  setRenderState(value: "pending" | "ok" | "error") {
+    useAppStore.setState({ renderState: value });
   },
 
   // Show grid (persistent)
@@ -406,6 +454,17 @@ export const store = {
 
   get currentCanvas() {
     return getCanvas(useAppStore.getState().route);
+  },
+
+  /** Canvas zoom (per drawing, persisted). */
+  stepZoom(delta: number) {
+    const canvas = store.currentCanvas;
+    const next = Math.max(0.2, Math.min(5, canvas.zoom + delta));
+    canvas.setZoom(next);
+  },
+
+  fitDiagram() {
+    store.currentCanvas.fitToDiagram();
   },
 
   // Derived: drawings list

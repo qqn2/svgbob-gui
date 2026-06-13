@@ -14,8 +14,8 @@
 }
 
 .topBar {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   background: var(--color-bg);
   user-select: none;
   white-space: nowrap;
@@ -37,8 +37,8 @@
 /* --- Secondary row (contextual: file list, help, export, freeform chars) --- */
 
 .secondRow {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   background: var(--color-bg);
   border-top: var(--border);
   padding: var(--space-md);
@@ -50,12 +50,18 @@
 /* --- Branding --- */
 
 .brand {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-md);
-  text-decoration: none;
   line-height: 1;
-  font-weight: bold;
+  font-weight: 700;
+}
+
+.zoomLabel {
+  font-family: var(--font-mono);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: var(--color-text-muted);
+  padding: 0 4px;
 }
 
 .brand:hover {

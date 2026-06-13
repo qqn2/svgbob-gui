@@ -1,5 +1,8 @@
 import { Box } from "#asciiflow/client/common";
 import * as constants from "#asciiflow/client/constants";
+import { getCanvasViewport } from "#asciiflow/client/canvas_viewport";
+import { snapZoom } from "#asciiflow/client/font";
+import { layerBBox } from "#asciiflow/client/layer_placement";
 import { Layer, LayerView } from "#asciiflow/client/layer";
 import { DrawingId, storageKey } from "#asciiflow/client/store";
 import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
@@ -129,6 +132,31 @@ export class CanvasStore {
       avgX * constants.CHAR_PIXELS_H,
       avgY * constants.CHAR_PIXELS_V,
     ));
+  }
+
+  /** Zoom and pan so committed diagram bbox fills ~85% of the canvas viewport. */
+  public fitToDiagram(): void {
+    const bbox = layerBBox(this._committed);
+    if (!bbox) {
+      this.recenter();
+      this.resetZoom();
+      return;
+    }
+    const vp = getCanvasViewport();
+    const tl = bbox.topLeft();
+    const br = bbox.bottomRight();
+    const cellsW = br.x - tl.x + 1;
+    const cellsH = br.y - tl.y + 1;
+    const diagramW = cellsW * constants.CHAR_PIXELS_H;
+    const diagramH = cellsH * constants.CHAR_PIXELS_V;
+    const margin = 0.15;
+    const zoomX = (vp.width * (1 - margin)) / diagramW;
+    const zoomY = (vp.height * (1 - margin)) / diagramH;
+    const zoom = Math.max(0.15, Math.min(5, snapZoom(Math.min(zoomX, zoomY))));
+    this.setZoom(zoom);
+    const cx = ((tl.x + br.x + 1) / 2) * constants.CHAR_PIXELS_H;
+    const cy = ((tl.y + br.y + 1) / 2) * constants.CHAR_PIXELS_V;
+    this.setOffset(new Vector(cx, cy));
   }
 
   public get offset() {

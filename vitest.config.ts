@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    setupFiles: ["./vitest.setup.ts"],
     include: ["asciiflow-upstream/client/**/*.test.ts"],
   },
 });

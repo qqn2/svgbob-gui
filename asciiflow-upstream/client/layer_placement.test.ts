@@ -30,6 +30,12 @@ describe("layer_placement", () => {
     expect(layerOverlapsCommitted(ghost2, committed)).toBe(false);
   });
 
+  it("overlap flag blocks commit semantics (ghost on committed cell)", () => {
+    const committed = textToLayer("A", new Vector(0, 0));
+    const ghost = offsetLayer(textToLayer("B", new Vector(0, 0)), new Vector(0, 0));
+    expect(layerOverlapsCommitted(ghost, committed)).toBe(true);
+  });
+
   it("snaps anchor near committed edges", () => {
     const committed = textToLayer("XX", new Vector(10, 10));
     const snapped = snapAnchor(new Vector(12, 11), committed, 2);
