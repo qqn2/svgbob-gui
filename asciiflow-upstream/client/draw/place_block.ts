@@ -1,4 +1,5 @@
 import { AbstractDrawFunction } from "#asciiflow/client/draw/function";
+import { scalePlacementLayer } from "#asciiflow/client/draw/place_block_scale";
 import {
   anchorForCursor,
   flipLayerH,
@@ -37,15 +38,18 @@ export class DrawPlaceBlock extends AbstractDrawFunction {
     return this._snapped;
   }
 
-  begin(text: string): void {
+  begin(text: string, scale = 1): void {
     store.selectTool.cleanup();
     store.currentTool.cleanup();
-    this.template = textToLayer(text, new Vector(0, 0));
+    this.template = scalePlacementLayer(textToLayer(text, new Vector(0, 0)), scale);
     this.bbox = layerBBox(this.template);
     this.lastCursor = null;
     this._overlaps = false;
     this._snapped = false;
     store.currentCanvas.clearScratch();
+    if (store.cursorCell) {
+      this.previewAt(new Vector(store.cursorCell.x, store.cursorCell.y));
+    }
   }
 
   rotateCW(): void {

@@ -4,17 +4,18 @@ import {
   SnippetParams,
   beginBlockPlacement,
 } from "#asciiflow/client/snippets";
+import { store } from "#asciiflow/client/store";
 import styles from "#asciiflow/client/snippets.module.css";
 import { TextField } from "#asciiflow/client/ui/components";
 import * as React from "react";
 
 function ParamDialog({
   snippet,
-  onPlace,
+  onParamsChange,
   onCancel,
 }: {
   snippet: Snippet;
-  onPlace: (params: SnippetParams) => void;
+  onParamsChange: (params: SnippetParams) => void;
   onCancel: () => void;
 }) {
   const defaults = snippet.defaultParams ?? {};
@@ -36,6 +37,16 @@ function ParamDialog({
     snippet.label === "rst sync";
   const needsRst = snippet.label === "rst sync";
 
+  const emitParams = (next: Partial<SnippetParams>) => {
+    onParamsChange({
+      label,
+      busWidth: parseInt(busWidth, 10) || 32,
+      clk,
+      rst,
+      ...next,
+    });
+  };
+
   return (
     <div className={styles.paramForm}>
       <span className={styles.paramTitle}>{snippet.title}</span>
@@ -43,7 +54,10 @@ function ParamDialog({
         <TextField
           label="label"
           value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          onChange={(e) => {
+            setLabel(e.target.value);
+            emitParams({ label: e.target.value });
+          }}
           onKeyDown={(e) => e.stopPropagation()}
         />
       )}
@@ -51,7 +65,10 @@ function ParamDialog({
         <TextField
           label="bus width"
           value={busWidth}
-          onChange={(e) => setBusWidth(e.target.value)}
+          onChange={(e) => {
+            setBusWidth(e.target.value);
+            emitParams({ busWidth: parseInt(e.target.value, 10) || 32 });
+          }}
           onKeyDown={(e) => e.stopPropagation()}
         />
       )}
@@ -59,7 +76,10 @@ function ParamDialog({
         <TextField
           label="clock"
           value={clk}
-          onChange={(e) => setClk(e.target.value)}
+          onChange={(e) => {
+            setClk(e.target.value);
+            emitParams({ clk: e.target.value });
+          }}
           onKeyDown={(e) => e.stopPropagation()}
         />
       )}
@@ -67,27 +87,16 @@ function ParamDialog({
         <TextField
           label="reset"
           value={rst}
-          onChange={(e) => setRst(e.target.value)}
+          onChange={(e) => {
+            setRst(e.target.value);
+            emitParams({ rst: e.target.value });
+          }}
           onKeyDown={(e) => e.stopPropagation()}
         />
       )}
       <div className={styles.paramActions}>
         <button type="button" className={styles.paramBtn} onClick={onCancel}>
           cancel
-        </button>
-        <button
-          type="button"
-          className={[styles.paramBtn, styles.paramBtnPrimary].join(" ")}
-          onClick={() =>
-            onPlace({
-              label,
-              busWidth: parseInt(busWidth, 10) || 32,
-              clk,
-              rst,
-            })
-          }
-        >
-          place
         </button>
       </div>
     </div>
@@ -96,12 +105,26 @@ function ParamDialog({
 
 export function SnippetsPanel() {
   const [pending, setPending] = React.useState<Snippet | null>(null);
+  const [activeSnippet, setActiveSnippet] = React.useState<Snippet | null>(null);
+  const [activeParams, setActiveParams] = React.useState<SnippetParams | undefined>(undefined);
+  const [scale, setScale] = React.useState(1);
 
   const handleClick = (snippet: Snippet) => {
+    setActiveSnippet(snippet);
+    setActiveParams(undefined);
     if (snippet.parametric) {
       setPending(snippet);
+      beginBlockPlacement(snippet, undefined, scale);
     } else {
-      beginBlockPlacement(snippet);
+      setPending(null);
+      beginBlockPlacement(snippet, undefined, scale);
+    }
+  };
+
+  const handleScale = (nextScale: number) => {
+    setScale(nextScale);
+    if (activeSnippet) {
+      beginBlockPlacement(activeSnippet, activeParams, nextScale);
     }
   };
 
@@ -111,13 +134,35 @@ export function SnippetsPanel() {
       <span className={styles.hint}>
         ghost follows cursor · click to place · R rotate · H/V flip · Esc cancels
       </span>
+      <span className={styles.scaleGroup} aria-label="block scale">
+        <span className={styles.scaleLabel}>scale</span>
+        {[1, 2, 3].map((value) => (
+          <button
+            key={value}
+            type="button"
+            className={[
+              styles.snippetBtn,
+              scale === value ? styles.snippetBtnActive : "",
+            ].filter(Boolean).join(" ")}
+            onClick={() => handleScale(value)}
+            title={`Place blocks at ${value}x scale`}
+          >
+            {value}x
+          </button>
+        ))}
+      </span>
       {pending && (
         <ParamDialog
           snippet={pending}
-          onCancel={() => setPending(null)}
-          onPlace={(params) => {
-            beginBlockPlacement(pending, params);
+          onCancel={() => {
+            store.placeBlockTool.cancel();
             setPending(null);
+            setActiveSnippet(null);
+            setActiveParams(undefined);
+          }}
+          onParamsChange={(params) => {
+            setActiveParams(params);
+            beginBlockPlacement(pending, params, scale);
           }}
         />
       )}

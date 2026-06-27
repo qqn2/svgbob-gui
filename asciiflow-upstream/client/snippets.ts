@@ -255,7 +255,8 @@ export const SNIPPETS: Snippet[] = [
 /** Enter stamp mode: ghost follows the cursor until click places it (Esc cancels). */
 export function beginBlockPlacement(
   snippet: Snippet,
-  params?: SnippetParams
+  params?: SnippetParams,
+  scale = 1
 ): void {
-  store.placeBlockTool.begin(resolveSnippetText(snippet, params));
+  store.placeBlockTool.begin(resolveSnippetText(snippet, params), scale);
 }

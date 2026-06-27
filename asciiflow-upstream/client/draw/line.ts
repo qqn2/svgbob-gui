@@ -7,6 +7,7 @@ import {
 import { UNICODE } from "#asciiflow/client/constants";
 import { Direction } from "#asciiflow/client/direction";
 import { AbstractDrawFunction } from "#asciiflow/client/draw/function";
+import { mergeCommittedConflicts } from "#asciiflow/client/draw/line_conflicts";
 import { line } from "#asciiflow/client/draw/utils";
 import { Layer, LayerView } from "#asciiflow/client/layer";
 import { cellContext } from "#asciiflow/client/render_layer";
@@ -91,6 +92,7 @@ export class DrawLine extends AbstractDrawFunction {
         })()
       );
     }
+    mergeCommittedConflicts(layer, store.currentCanvas.committed);
     // Start or end characters may not just be lines, if adjacent cells have any incoming connections
     // then we connect to them, and then remove any unnecessary connections (if possible).
     const combined = new LayerView([store.currentCanvas.committed, layer]);

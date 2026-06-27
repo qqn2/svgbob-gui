@@ -33,6 +33,23 @@
   color: var(--color-accent);
 }
 
+.snippetBtnActive {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.scaleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 6px;
+}
+
+.scaleLabel {
+  font-size: var(--font-size);
+  color: var(--color-text-muted);
+}
+
 .paramForm {
   display: flex;
   flex-wrap: wrap;
@@ -66,7 +83,3 @@
   cursor: pointer;
 }
 
-.paramBtnPrimary {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
