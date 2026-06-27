@@ -332,7 +332,7 @@
 
 .helpSection {
   color: var(--color-text-muted);
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .helpDivider {

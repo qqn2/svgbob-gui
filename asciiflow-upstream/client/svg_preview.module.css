@@ -41,15 +41,24 @@
 .svgMount {
   flex: 1;
   overflow: auto;
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  padding: 32px 48px 96px;
+  display: block;
   background: var(--color-canvas-bg);
 }
 
-.svgMount :global(svg) {
-  max-width: 100%;
+.svgScaler {
+  position: relative;
+  margin: 0 auto;
+}
+
+.svgContent {
+  width: max-content;
+  height: max-content;
+  transform-origin: top left;
+}
+
+.svgContent :global(svg) {
+  max-width: none;
   height: auto;
   display: block;
 }

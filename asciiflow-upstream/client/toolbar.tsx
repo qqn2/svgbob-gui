@@ -3,10 +3,7 @@ import { ExportPanel } from "#asciiflow/client/export";
 import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
 import { layerToText } from "#asciiflow/client/text_utils";
-import {
-  ThemeMode,
-  UI_FONT_SCALES,
-} from "#asciiflow/client/theme_settings";
+import { ThemeMode } from "#asciiflow/client/theme_settings";
 import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
 import {
   Button,
@@ -140,6 +137,16 @@ export function Toolbar() {
         )}
 
         {!isShared ? <ZoomCluster /> : null}
+
+        {!isShared ? (
+          <ActionBtn
+            color="var(--color-orange)"
+            onClick={() => store.currentCanvas.recenter()}
+            title="Recenter canvas"
+          >
+            recenter
+          </ActionBtn>
+        ) : null}
 
         <Sep />
 
@@ -283,12 +290,11 @@ function ZoomCluster() {
 }
 
 // ---------------------------------------------------------------------------
-// View panel — theme, UI scale, grid
+// View panel — theme and grid
 // ---------------------------------------------------------------------------
 
 function ViewPanel() {
   const themeMode = useAppStore((s) => s.themeMode);
-  const uiFontScale = useAppStore((s) => s.uiFontScale);
   const showGrid = useAppStore((s) => s.showGrid);
 
   const themes: Array<{ id: ThemeMode; label: string }> = [
@@ -310,17 +316,6 @@ function ViewPanel() {
         </ActionBtn>
       ))}
       <span className={styles.sep}>{"\u2502"}</span>
-      <span className={styles.viewLabel}>UI</span>
-      {UI_FONT_SCALES.map((s) => (
-        <ActionBtn
-          key={s.id}
-          color={uiFontScale === s.value ? "var(--color-accent)" : "var(--color-text-muted)"}
-          onClick={() => store.setUiFontScale(s.value)}
-        >
-          {s.label}
-        </ActionBtn>
-      ))}
-      <span className={styles.sep}>{"\u2502"}</span>
       <span className={styles.viewLabel}>
         grid: <span className={styles.viewValue}>{showGrid ? "on" : "off"}</span>
       </span>
@@ -329,13 +324,6 @@ function ViewPanel() {
         onClick={() => store.setShowGrid(!showGrid)}
       >
         {showGrid ? "hide" : "show"}
-      </ActionBtn>
-      <span className={styles.sep}>{"\u2502"}</span>
-      <ActionBtn
-        color="var(--color-orange)"
-        onClick={() => store.currentCanvas.recenter()}
-      >
-        recenter
       </ActionBtn>
     </div>
   );
@@ -436,7 +424,7 @@ function HelpContent() {
         <span style={{ color: "var(--color-cyan)" }}>box</span>
         <span>drag corner to corner</span>
         <span style={{ color: "var(--color-success)" }}>select</span>
-        <span>drag to resize/move. <Kbd>{cmd}+c</Kbd>/<Kbd>{cmd}+v</Kbd> copy/paste, <Kbd>delete</Kbd> erase, <Kbd>shift</Kbd> force select</span>
+        <span>drag to resize/move. <Kbd>{cmd}+a</Kbd> select all, <Kbd>{cmd}+c</Kbd>/<Kbd>{cmd}+v</Kbd> copy/paste, <Kbd>delete</Kbd> erase, <Kbd>shift</Kbd> force select</span>
         <span style={{ color: "var(--color-orange)" }}>draw</span>
         <span>freeform. press any key to change character</span>
         <span style={{ color: "var(--color-purple)" }}>arrow / line</span>
@@ -473,7 +461,7 @@ function HelpContent() {
         {" \u2502 "}
         <a className={styles.helpLink} href="https://github.com/lewish/asciiflow/issues/new" target="_blank" rel="noopener">file a bug</a>
         {" \u2502 "}
-        <a className={styles.helpLink} href="https://asciiflow.com" target="_blank" rel="noopener">stable</a>
+        <a className={styles.helpLink} href="https://asciiflow.com" target="_blank" rel="noopener">asciiflow</a>
       </div>
     </div>
   );

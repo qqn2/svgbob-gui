@@ -1,5 +1,6 @@
 import * as constants from "#asciiflow/client/constants";
 import { snapZoom } from "#asciiflow/client/font";
+import { layerBBox } from "#asciiflow/client/layer_placement";
 import { store, IModifierKeys, ToolMode } from "#asciiflow/client/store";
 import { Vector } from "#asciiflow/client/vector";
 import { screenToCell, setCanvasCursor } from "#asciiflow/client/view";
@@ -132,6 +133,22 @@ export class Controller {
       // Copy (Ctrl+C), Cut (Ctrl+X), and Paste (Ctrl+V) are handled by
       // native copy/cut/paste events in app.tsx — don't intercept them here
       // so the browser fires those events with proper clipboard permissions.
+      if (event.keyCode === 65) {
+        store.placeBlockTool.cancel();
+        store.currentCanvas.clearScratch();
+        const bbox = layerBBox(store.currentCanvas.committed);
+        if (!bbox) {
+          store.currentCanvas.clearSelection();
+          store.selectTool.selectBox = null;
+          event.preventDefault();
+          return;
+        }
+        store.setToolMode(ToolMode.SELECT);
+        store.selectTool.selectBox = bbox;
+        store.currentCanvas.setSelection(bbox);
+        event.preventDefault();
+        return;
+      }
       if (event.keyCode === 90) {
         if (event.shiftKey) {
           store.currentCanvas.redo();

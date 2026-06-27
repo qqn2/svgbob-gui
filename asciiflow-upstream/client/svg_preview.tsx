@@ -21,6 +21,20 @@ function parseSvgDims(svg: string): string | null {
   return null;
 }
 
+function parseSvgSize(svg: string): { width: number; height: number } | null {
+  const m = svg.match(/<svg[^>]*\swidth="([^"]+)"[^>]*\sheight="([^"]+)"/);
+  if (m) return parseSizePair(m[1], m[2]);
+  const m2 = svg.match(/<svg[^>]*\sheight="([^"]+)"[^>]*\swidth="([^"]+)"/);
+  if (m2) return parseSizePair(m2[2], m2[1]);
+  return null;
+}
+
+function parseSizePair(width: string, height: string): { width: number; height: number } | null {
+  const w = Number.parseFloat(width);
+  const h = Number.parseFloat(height);
+  return Number.isFinite(w) && Number.isFinite(h) ? { width: w, height: h } : null;
+}
+
 function asciiStats(text: string) {
   const lines = text ? text.split("\n").length : 0;
   return { lines, chars: text.length };
@@ -37,10 +51,12 @@ async function copyText(text: string): Promise<void> {
 export function SvgPreview() {
   const canvasVersion = useAppStore((s) => s.canvasVersion);
   const route = useAppStore((s) => s.route);
+  const zoom = store.currentCanvas.zoom;
   const [svg, setSvg] = React.useState("");
   const [sourceAscii, setSourceAscii] = React.useState("");
   const [ms, setMs] = React.useState<number | null>(null);
   const [dims, setDims] = React.useState<string | null>(null);
+  const [svgSize, setSvgSize] = React.useState<{ width: number; height: number } | null>(null);
   const [ready, setReady] = React.useState(false);
   const [initError, setInitError] = React.useState<string | null>(null);
   const [renderError, setRenderError] = React.useState<string | null>(null);
@@ -74,6 +90,7 @@ export function SvgPreview() {
       if (!preview.trim()) {
         setMs(null);
         setDims(null);
+        setSvgSize(null);
         store.setRenderState("ok");
         return;
       }
@@ -84,6 +101,7 @@ export function SvgPreview() {
           setMs(performance.now() - t0);
           setSvg(result);
           setDims(parseSvgDims(result));
+          setSvgSize(parseSvgSize(result));
           setRenderError(null);
           store.setRenderState("ok");
         })
@@ -91,6 +109,7 @@ export function SvgPreview() {
           setMs(null);
           setSvg("");
           setDims(null);
+          setSvgSize(null);
           setRenderError(
             err instanceof Error ? err.message : "svgbob render failed"
           );
@@ -201,10 +220,27 @@ export function SvgPreview() {
           </span>
         </div>
       ) : null}
-      <div
-        className={styles.svgMount}
-        dangerouslySetInnerHTML={svg ? { __html: svg } : undefined}
-      />
+      <div className={styles.svgMount}>
+        {svg ? (
+          <div
+            className={styles.svgScaler}
+            style={
+              svgSize
+                ? {
+                    width: svgSize.width * zoom,
+                    height: svgSize.height * zoom,
+                  }
+                : undefined
+            }
+          >
+            <div
+              className={styles.svgContent}
+              style={{ transform: `scale(${zoom})` }}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          </div>
+        ) : null}
+      </div>
       <footer className={styles.footer}>
         <span>
           {stats.lines} lines · {stats.chars} chars (committed)
