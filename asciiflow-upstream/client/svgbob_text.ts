@@ -38,7 +38,15 @@ function isVerticalWall(c: string): boolean {
 }
 
 function isHorizontalWall(c: string): boolean {
-  return c === "-" || c === "─" || c === "_";
+  return (
+    c === "-" ||
+    c === "─" ||
+    c === "_" ||
+    c === "+" ||
+    c === "┬" ||
+    c === "┴" ||
+    c === "┼"
+  );
 }
 
 function isCorner(c: string): boolean {
@@ -107,6 +115,38 @@ function findFilledBoxAt(lines: string[], x: number, y: number): Omit<FilledBox,
   return { top, left, bottom, right };
 }
 
+function findExternalFilledBoxAt(
+  lines: string[],
+  x: number,
+  y: number
+): Omit<FilledBox, "tagId"> | null {
+  const right = x - 1;
+  if (!isVerticalWall(cell(lines, right, y)) && !isCorner(cell(lines, right, y))) {
+    return null;
+  }
+
+  let left = right - 1;
+  while (left >= 0 && !isVerticalWall(cell(lines, left, y))) left--;
+  if (!isVerticalWall(cell(lines, left, y)) || left >= right) return null;
+
+  let top = y;
+  while (top >= 0 && !isHorizontalBorderRow(lines, top, left, right)) top--;
+  if (!isHorizontalBorderRow(lines, top, left, right)) return null;
+
+  let bottom = y;
+  while (bottom < lines.length && !isHorizontalBorderRow(lines, bottom, left, right)) bottom++;
+  if (!isHorizontalBorderRow(lines, bottom, left, right)) return null;
+
+  if (
+    !isVerticalBorderCol(lines, left, top, bottom) ||
+    !isVerticalBorderCol(lines, right, top, bottom)
+  ) {
+    return null;
+  }
+
+  return { top, left, bottom, right };
+}
+
 export function stripFillTags(ascii: string): string {
   return ascii.replace(FILL_TAG_PATTERN, (tag) => " ".repeat(tag.length));
 }
@@ -120,7 +160,9 @@ export function collectFilledBoxes(ascii: string): FilledBox[] {
     let match: RegExpExecArray | null;
     while ((match = re.exec(line)) !== null) {
       const tagId = match[0].slice(1, -1);
-      const box = findFilledBoxAt(lines, match.index, y);
+      const box =
+        findFilledBoxAt(lines, match.index, y) ??
+        findExternalFilledBoxAt(lines, match.index, y);
       if (!box || !fillStyleForTag(tagId)) continue;
       boxes.set(
         `${box.left},${box.top},${box.right},${box.bottom}`,

@@ -10,6 +10,7 @@ export interface DetectedBox {
 }
 
 const SCAN_LIMIT = 400;
+const FILL_TAG_SLOT_WIDTH = 16;
 
 function cell(layer: ILayerView, x: number, y: number): string | null {
   return layer.get(new Vector(x, y));
@@ -20,7 +21,15 @@ function isVerticalWall(c: string | null): boolean {
 }
 
 function isHorizontalWall(c: string | null): boolean {
-  return c === "-" || c === "─" || c === "_";
+  return (
+    c === "-" ||
+    c === "─" ||
+    c === "_" ||
+    c === "+" ||
+    c === "┬" ||
+    c === "┴" ||
+    c === "┼"
+  );
 }
 
 function isCorner(c: string | null): boolean {
@@ -153,6 +162,14 @@ function rowText(layer: ILayerView, box: DetectedBox, y: number): string {
   return text;
 }
 
+function rowTextRange(layer: ILayerView, y: number, left: number, width: number): string {
+  let text = "";
+  for (let x = left; x < left + width; x++) {
+    text += cell(layer, x, y) ?? " ";
+  }
+  return text;
+}
+
 function rowScore(text: string): number {
   const stripped = text.replace(FILL_TAG_PATTERN, "").replace(/\s/g, "");
   return stripped.length;
@@ -176,15 +193,81 @@ function stripFillTags(text: string): string {
   return text.replace(FILL_TAG_PATTERN, "").replace(/\s+$/, "");
 }
 
-function applyTagToInterior(text: string, tagId: string | null): string {
+function tagText(tagId: string): string {
+  return `{${tagId}}`;
+}
+
+function applyTagToInterior(
+  text: string,
+  tagId: string | null,
+  width: number
+): { text: string; placed: boolean } {
   const base = stripFillTags(text);
   if (!tagId) {
-    return base;
+    return { text: base, placed: false };
   }
+  const tag = tagText(tagId);
   if (!base.trim()) {
-    return `{${tagId}}`;
+    return tag.length <= width
+      ? { text: tag, placed: true }
+      : { text: base, placed: false };
   }
-  return `${base} {${tagId}}`;
+  const tagged = `${base} ${tag}`;
+  if (tagged.length <= width) {
+    return { text: tagged, placed: true };
+  }
+  return { text: base, placed: false };
+}
+
+function outsideTagRows(box: DetectedBox, preferredRow: number): number[] {
+  return [
+    preferredRow,
+    ...Array.from({ length: box.bottom - box.top + 1 }, (_, i) => box.top + i),
+  ].filter((row, index, rows) => rows.indexOf(row) === index);
+}
+
+function canPlaceOutsideTag(
+  layer: ILayerView,
+  box: DetectedBox,
+  y: number,
+  tag: string
+): boolean {
+  const existing = rowTextRange(layer, y, box.right + 1, tag.length);
+  const withoutTags = existing.replace(FILL_TAG_PATTERN, "");
+  return withoutTags.trim() === "";
+}
+
+function writeRangePatch(
+  patch: Layer,
+  layer: ILayerView,
+  y: number,
+  left: number,
+  width: number,
+  value: string
+) {
+  for (let i = 0; i < width; i++) {
+    const x = left + i;
+    const pos = new Vector(x, y);
+    const nextChar = i < value.length ? value[i] : " ";
+    const prev = cell(layer, x, y);
+    const normalizedPrev = prev ?? " ";
+    if (nextChar !== normalizedPrev) {
+      patch.set(pos, nextChar === " " ? " " : nextChar);
+    }
+  }
+}
+
+function clearOutsideFillTags(
+  patch: Layer,
+  layer: ILayerView,
+  box: DetectedBox
+) {
+  for (let y = box.top; y <= box.bottom; y++) {
+    const left = box.right + 1;
+    const current = rowTextRange(layer, y, left, FILL_TAG_SLOT_WIDTH);
+    const next = current.replace(FILL_TAG_PATTERN, (tag) => " ".repeat(tag.length));
+    writeRangePatch(patch, layer, y, left, FILL_TAG_SLOT_WIDTH, next);
+  }
 }
 
 /** Layer patch updating one interior row with a fill tag (or clearing it). */
@@ -195,8 +278,15 @@ export function buildFillPatch(
   tagId: string | null
 ): Layer {
   const patch = new Layer();
-  const interior = applyTagToInterior(rowText(layer, box, labelRow), tagId);
   const width = box.right - box.left - 1;
+  const interiorResult = applyTagToInterior(
+    rowText(layer, box, labelRow),
+    tagId,
+    width
+  );
+  const interior = interiorResult.text;
+
+  clearOutsideFillTags(patch, layer, box);
 
   for (let i = 0; i < width; i++) {
     const x = box.left + 1 + i;
@@ -218,6 +308,16 @@ export function buildFillPatch(
       if (prev != null && prev !== " ") {
         patch.set(pos, " ");
       }
+    }
+  }
+
+  if (tagId && !interiorResult.placed) {
+    const tag = tagText(tagId);
+    const outsideRow = outsideTagRows(box, labelRow).find((row) =>
+      canPlaceOutsideTag(layer, box, row, tag)
+    );
+    if (outsideRow !== undefined) {
+      writeRangePatch(patch, layer, outsideRow, box.right + 1, tag.length, tag);
     }
   }
 

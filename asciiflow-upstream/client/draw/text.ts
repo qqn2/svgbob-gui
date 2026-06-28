@@ -2,6 +2,7 @@ import { Box } from "#asciiflow/client/common";
 import { AbstractDrawFunction } from "#asciiflow/client/draw/function";
 import { Layer } from "#asciiflow/client/layer";
 import { store, IModifierKeys } from "#asciiflow/client/store";
+import { buildAutoFitTextPatch } from "#asciiflow/client/text_box_autofit";
 import { Vector } from "#asciiflow/client/vector";
 
 export class DrawText extends AbstractDrawFunction {
@@ -17,6 +18,18 @@ export class DrawText extends AbstractDrawFunction {
     }
     store.currentCanvas.setScratchLayer(this.textLayer);
     store.currentCanvas.setSelection(new Box(position, position));
+  }
+
+  private commitTextLayer() {
+    if (!this.textLayer) {
+      return;
+    }
+    const patch =
+      buildAutoFitTextPatch(store.currentCanvas.committed, this.textLayer) ??
+      this.textLayer;
+    store.currentCanvas.setScratchLayer(patch);
+    store.currentCanvas.commitScratch();
+    this.textLayer = null;
   }
 
   getCursor() {
@@ -42,8 +55,7 @@ export class DrawText extends AbstractDrawFunction {
             this.currentPosition.y + 1
           );
         } else {
-          store.currentCanvas.commitScratch();
-          this.textLayer = null;
+          this.commitTextLayer();
         }
       }
       if (value === "<backspace>") {
@@ -80,9 +92,6 @@ export class DrawText extends AbstractDrawFunction {
   }
 
   cleanup() {
-    if (!!this.textLayer) {
-      store.currentCanvas.commitScratch();
-      this.textLayer = null;
-    }
+    this.commitTextLayer();
   }
 }

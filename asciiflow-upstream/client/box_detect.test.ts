@@ -49,4 +49,25 @@ describe("box_detect", () => {
     expect(row).not.toContain("{c10}");
     expect(row).toContain("{#ff8800}");
   });
+
+  it("places custom RGB metadata outside narrow labeled boxes", () => {
+    const layer = textToLayer(
+      [
+        "+------------------+",
+        '|   "DWC_usb3"     |',
+        "| xHC + BMU + RAM0 |",
+        "+--------+---------+",
+      ].join("\n"),
+      new Vector(0, 0)
+    );
+    const box = findBoxAt(layer, new Vector(5, 1))!;
+    const patch = buildFillPatch(layer, box, pickLabelRow(layer, box), "#ff8800");
+    const [next] = layer.apply(patch);
+    const labelRow = Array.from({ length: 18 }, (_, i) => next.get(new Vector(1 + i, 2)) ?? " ").join("");
+    const outside = Array.from({ length: 9 }, (_, i) => next.get(new Vector(20 + i, 2)) ?? " ").join("");
+
+    expect(labelRow).toContain("xHC + BMU + RAM0");
+    expect(labelRow).not.toContain("{#ff8800}");
+    expect(outside).toBe("{#ff8800}");
+  });
 });

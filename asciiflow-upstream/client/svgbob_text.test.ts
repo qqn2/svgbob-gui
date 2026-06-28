@@ -43,4 +43,16 @@ describe("svgbob_text", () => {
     expect(out).toContain("stroke:#944f00");
     expect(out).not.toContain("nofill");
   });
+
+  it("collects custom fill tags placed just outside narrow boxes", () => {
+    const ascii = [
+      "+------------------+",
+      '|   "DWC_usb3"     |',
+      "| xHC + BMU + RAM0 |{#ff8800}",
+      "+--------+---------+",
+    ].join("\n");
+    expect(collectFilledBoxes(ascii)).toEqual([
+      { top: 0, left: 0, bottom: 3, right: 19, tagId: "#ff8800" },
+    ]);
+  });
 });

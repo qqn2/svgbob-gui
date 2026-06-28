@@ -580,7 +580,7 @@ function HelpContent() {
         <span style={{ color: "var(--color-purple)" }}>arrow / line</span>
         <span>drag start to end. <Kbd>shift</Kbd> changes orientation</span>
         <span style={{ color: "var(--color-warning)" }}>text</span>
-        <span>click and type. <Kbd>enter</Kbd> commit, <Kbd>shift+enter</Kbd> newline</span>
+        <span>click and type. inside boxes, commit auto-quotes svgbob labels and expands the box. <Kbd>enter</Kbd> commit, <Kbd>shift+enter</Kbd> newline</span>
         <span style={{ color: "var(--color-danger)" }}>fill</span>
         <span>pick a preset or custom RGB color, then click inside a box. <Kbd>alt+7</Kbd></span>
         <span style={{ color: "var(--color-danger)" }}>erase</span>
