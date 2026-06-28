@@ -4,7 +4,11 @@ import {
   scaleSvgMarkup,
 } from "#asciiflow/client/export_svg_utils";
 import { ILayerView } from "#asciiflow/client/layer";
-import { layerToText } from "#asciiflow/client/text_utils";
+import {
+  applyFillStylesToSvg,
+  layerToSvgbobText,
+  stripFillTags,
+} from "#asciiflow/client/svgbob_text";
 
 export { parseSvgSize, scaleSvgMarkup } from "#asciiflow/client/export_svg_utils";
 
@@ -19,11 +23,11 @@ export interface ExportOptions {
 }
 
 export function renderAsciiToSvg(ascii: string): string {
-  return renderSync(ascii);
+  return applyFillStylesToSvg(renderSync(stripFillTags(ascii)), ascii);
 }
 
 export function asciiFromLayer(layer: ILayerView): string {
-  return layerToText(layer);
+  return layerToSvgbobText(layer);
 }
 
 export function downloadBlob(content: Blob | string, filename: string, mime?: string): void {
@@ -111,6 +115,6 @@ export async function exportLayer(
   layer: ILayerView,
   options: ExportOptions
 ): Promise<void> {
-  const ascii = layerToText(layer);
+  const ascii = layerToSvgbobText(layer);
   await exportDiagram(ascii, options);
 }

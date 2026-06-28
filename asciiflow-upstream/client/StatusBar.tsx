@@ -10,6 +10,8 @@ const TOOL_LABELS: Record<number, string> = {
   [ToolMode.ARROWS]: "arrow",
   [ToolMode.LINES]: "line",
   [ToolMode.TEXT]: "text",
+  [ToolMode.FILL]: "fill",
+  [ToolMode.ERASE]: "erase",
 };
 
 export function StatusBar() {

@@ -30,8 +30,30 @@
   align-items: center;
   min-height: 36px;
   padding: 0 var(--space-md);
-  gap: 0;
+  gap: var(--space-sm);
   flex-wrap: wrap;
+}
+
+.toolbarGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 28px;
+  padding-left: var(--space-md);
+  border-left: var(--border);
+}
+
+.brand + .toolbarGroup {
+  border-left: none;
+  padding-left: 0;
+}
+
+.toolsGroup {
+  gap: 0;
+}
+
+.utilityGroup {
+  margin-left: auto;
 }
 
 /* --- Secondary row (contextual: file list, help, export, freeform chars) --- */
@@ -58,7 +80,7 @@
 }
 
 .zoomLabel {
-  font-family: var(--font-mono);
+  font-family: var(--font-ui);
   font-size: calc(12px * var(--ui-font-scale, 1));
   color: var(--color-text-muted);
   padding: 0 4px;
@@ -71,8 +93,8 @@
 /* --- Plain text menu triggers --- */
 
 .menuBarBtn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-md);
   background: none;
   border: none;
@@ -89,7 +111,7 @@
 
 .menuBarBtnActive {
   color: var(--color-text);
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* --- Separator: box-drawing vertical │ --- */
@@ -104,8 +126,8 @@
 /* --- Tool tabs --- */
 
 .toolTab {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-sm);
   background: none;
   border: none;
@@ -120,14 +142,14 @@
 }
 
 .toolTabActive {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 /* --- Bracket-wrapped action buttons --- */
 
 .actionBtn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: 0 var(--space-xs);
   background: none;
   border: none;
@@ -271,6 +293,98 @@
   color: var(--color-text);
 }
 
+/* --- Fill panel (in second row) --- */
+
+.fillPanel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.fillHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size);
+}
+
+.fillSection {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.fillLabel {
+  color: var(--color-text-muted);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  white-space: nowrap;
+}
+
+.fillSwatches {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.fillSwatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fillSwatchClear {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fillSwatchActive {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.fillColorInput {
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.fillHexInput {
+  width: 78px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
+  padding: 0 var(--space-sm);
+  outline: none;
+}
+
+.fillHexInput:focus {
+  border-color: var(--color-accent);
+}
+
+.fillRgbValue {
+  color: var(--color-text-muted);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  white-space: nowrap;
+}
+
 /* --- Character picker (in second row) --- */
 
 .charPicker {
@@ -278,7 +392,32 @@
   flex-wrap: wrap;
   width: 100%;
   min-width: 0;
-  overflow: hidden;
+  gap: var(--space-md) var(--space-lg);
+  overflow: auto;
+  max-height: 34vh;
+  padding-top: var(--space-xs);
+}
+
+.charGroup {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-sm);
+  min-width: min(100%, 420px);
+}
+
+.charGroupLabel {
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  line-height: 28px;
+  white-space: nowrap;
+}
+
+.charGroupKeys {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .charBtn {
@@ -311,7 +450,9 @@
 /* --- Help content (inline in second row, table layout) --- */
 
 .helpContent {
-  line-height: 1.6;
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
+  line-height: 1.45;
   color: var(--color-text);
 }
 
@@ -333,6 +474,7 @@
 .helpSection {
   color: var(--color-text-muted);
   font-weight: 600;
+  font-size: calc(12px * var(--ui-font-scale, 1));
 }
 
 .helpDivider {

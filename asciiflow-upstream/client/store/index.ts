@@ -1,4 +1,6 @@
 import { DrawBox } from "#asciiflow/client/draw/box";
+import { DrawErase } from "#asciiflow/client/draw/erase";
+import { DrawFill } from "#asciiflow/client/draw/fill";
 import { DrawFreeform } from "#asciiflow/client/draw/freeform";
 import { IDrawFunction } from "#asciiflow/client/draw/function";
 import { DrawLine } from "#asciiflow/client/draw/line";
@@ -30,6 +32,8 @@ export enum ToolMode {
   ARROWS = 6,
   LINES = 4,
   TEXT = 7,
+  FILL = 8,
+  ERASE = 9,
 }
 
 export interface IModifierKeys {
@@ -150,6 +154,8 @@ export interface AppState {
   cursorCell: { x: number; y: number } | null;
   renderState: "pending" | "ok" | "error";
   showGrid: boolean;
+  /** Active svgbob fill tag (preset id or #rrggbb), or null to clear fill on click. */
+  selectedFillTag: string | null;
 
   // Bumped whenever a CanvasStore mutates, so React can re-render.
   canvasVersion: number;
@@ -182,6 +188,7 @@ function initialState(): AppState {
     cursorCell: null,
     renderState: "pending",
     showGrid: readPersistent("showGrid", true),
+    selectedFillTag: readPersistent<string | null>("selectedFillTag", "c1"),
     canvasVersion: 0,
   };
 }
@@ -205,6 +212,8 @@ const selectTool = new DrawSelect();
 const freeformTool = new DrawFreeform();
 const textTool = new DrawText();
 const placeBlockTool = new DrawPlaceBlock();
+const fillTool = new DrawFill();
+const eraseTool = new DrawErase();
 const nullTool = new DrawNull();
 
 // ---------------------------------------------------------------------------
@@ -254,6 +263,8 @@ export const store = {
   freeformTool,
   textTool,
   placeBlockTool,
+  fillTool,
+  eraseTool,
   nullTool,
 
   // Route
@@ -309,7 +320,18 @@ export const store = {
       ? textTool
       : mode === ToolMode.SELECT
       ? selectTool
+      : mode === ToolMode.FILL
+      ? fillTool
+      : mode === ToolMode.ERASE
+      ? eraseTool
       : nullTool;
+  },
+
+  get selectedFillTag() {
+    return useAppStore.getState().selectedFillTag;
+  },
+  setSelectedFillTag(value: string | null) {
+    setPersistent("selectedFillTag", value);
   },
 
   // Alt pressed

@@ -127,6 +127,12 @@ export class Controller {
       } else if (event.keyCode === "6".charCodeAt(0)) {
         store.setToolMode(ToolMode.TEXT);
         event.preventDefault();
+      } else if (event.keyCode === "7".charCodeAt(0)) {
+        store.setToolMode(ToolMode.FILL);
+        event.preventDefault();
+      } else if (event.keyCode === "8".charCodeAt(0)) {
+        store.setToolMode(ToolMode.ERASE);
+        event.preventDefault();
       }
     }
     if (event.ctrlKey || event.metaKey) {

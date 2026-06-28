@@ -14,6 +14,10 @@
     "asciiflow-upstream/client/svgbob_storage.ts",
     "asciiflow-upstream/client/text_utils.ts",
     "asciiflow-upstream/client/draw/place_block.ts",
+    "asciiflow-upstream/client/box_detect.ts",
+    "asciiflow-upstream/client/fill_palette.ts",
+    "asciiflow-upstream/client/svgbob_text.ts",
+    "asciiflow-upstream/client/draw/fill.ts",
     "asciiflow-upstream/client/**/*.test.ts"
   ]
 }

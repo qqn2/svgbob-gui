@@ -1,5 +1,10 @@
 import { ASCII, UNICODE } from "#asciiflow/client/constants";
 import { ExportPanel } from "#asciiflow/client/export";
+import {
+  FILL_SWATCHES,
+  normalizeCustomFillTag,
+  swatchById,
+} from "#asciiflow/client/fill_palette";
 import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
 import { layerToText } from "#asciiflow/client/text_utils";
@@ -57,6 +62,8 @@ const TOOLS: Array<{
   { mode: ToolMode.ARROWS, label: "arrow", testId: "tool-arrow", shortcut: "4", color: "var(--color-purple)" },
   { mode: ToolMode.LINES, label: "line", testId: "tool-line", shortcut: "5", color: "var(--color-accent)" },
   { mode: ToolMode.TEXT, label: "text", testId: "tool-text", shortcut: "6", color: "var(--color-warning)" },
+  { mode: ToolMode.FILL, label: "fill", testId: "tool-fill", shortcut: "7", color: "var(--color-danger)" },
+  { mode: ToolMode.ERASE, label: "erase", testId: "tool-erase", shortcut: "8", color: "var(--color-danger)" },
 ];
 
 // Helper: stop all keyboard event propagation so controller doesn't intercept
@@ -85,7 +92,10 @@ export function Toolbar() {
   const showFreeformPicker =
     !isShared && selectedToolMode === ToolMode.FREEFORM && panel === null;
 
-  const showSecondRow = panel !== null || showFreeformPicker;
+  const showFillPicker =
+    !isShared && selectedToolMode === ToolMode.FILL && panel === null;
+
+  const showSecondRow = panel !== null || showFreeformPicker || showFillPicker;
 
   return (
     <div className={styles.topBarWrapper}>
@@ -98,20 +108,19 @@ export function Toolbar() {
           <span style={{ color: "var(--color-accent)" }}>bob</span>
         </span>
 
-        <Sep />
-
-        {/* Panel toggles */}
-        <PanelBtn id="file" current={panel} onClick={togglePanel}>
-          files
-        </PanelBtn>
-
-        <Sep />
+        <ToolbarGroup>
+          <PanelBtn id="file" current={panel} onClick={togglePanel} title="Files">
+            files
+          </PanelBtn>
+        </ToolbarGroup>
 
         {/* Tools (or shared banner) */}
         {isShared ? (
-          <SharedBanner drawingId={route} />
+          <ToolbarGroup>
+            <SharedBanner drawingId={route} />
+          </ToolbarGroup>
         ) : (
-          <>
+          <ToolbarGroup className={styles.toolsGroup}>
             {TOOLS.map((tool) => {
               const active = selectedToolMode === tool.mode;
               return (
@@ -122,6 +131,7 @@ export function Toolbar() {
                     active ? styles.toolTabActive : "",
                   ].filter(Boolean).join(" ")}
                   style={active ? { color: tool.color } : undefined}
+                  title={`${tool.label} tool`}
                   onClick={() => {
                     store.setToolMode(tool.mode);
                     setPanel(null);
@@ -133,36 +143,35 @@ export function Toolbar() {
                 </button>
               );
             })}
-          </>
+          </ToolbarGroup>
         )}
 
-        {!isShared ? <ZoomCluster /> : null}
-
         {!isShared ? (
-          <ActionBtn
-            color="var(--color-orange)"
-            onClick={() => store.currentCanvas.recenter()}
-            title="Recenter canvas"
-          >
-            recenter
-          </ActionBtn>
+          <ToolbarGroup>
+            <ZoomCluster />
+            <ActionBtn
+              color="var(--color-orange)"
+              onClick={() => store.currentCanvas.recenter()}
+              title="Recenter canvas"
+            >
+              recenter
+            </ActionBtn>
+          </ToolbarGroup>
         ) : null}
 
-        <Sep />
+        <ToolbarGroup>
+          <PanelBtn id="snippets" current={panel} onClick={togglePanel} title="Blocks">
+            blocks
+          </PanelBtn>
 
-        <PanelBtn id="snippets" current={panel} onClick={togglePanel}>
-          blocks
-        </PanelBtn>
-
-        <PanelBtn id="export" current={panel} onClick={togglePanel}>
-          export
-        </PanelBtn>
-
-        <Sep />
+          <PanelBtn id="export" current={panel} onClick={togglePanel} title="Export">
+            export
+          </PanelBtn>
+        </ToolbarGroup>
 
         {/* Actions */}
         {!isShared && (
-          <>
+          <ToolbarGroup>
             <ActionBtn
               color="var(--color-success)"
               onClick={() => store.currentCanvas.undo()}
@@ -177,20 +186,18 @@ export function Toolbar() {
             >
               redo
             </ActionBtn>
-            <Sep />
-          </>
+          </ToolbarGroup>
         )}
 
-        <PanelBtn id="view" current={panel} onClick={togglePanel}>
-          view
-        </PanelBtn>
+        <ToolbarGroup className={styles.utilityGroup}>
+          <PanelBtn id="view" current={panel} onClick={togglePanel} title="View settings">
+            view
+          </PanelBtn>
 
-        <Sep />
-
-        {/* Help — far right */}
-        <PanelBtn id="help" current={panel} onClick={togglePanel}>
-          help
-        </PanelBtn>
+          <PanelBtn id="help" current={panel} onClick={togglePanel} title="Help">
+            help
+          </PanelBtn>
+        </ToolbarGroup>
       </div>
     </div>
 
@@ -203,6 +210,7 @@ export function Toolbar() {
           {panel === "export" && <ExportPanel drawingId={route} />}
           {panel === "view" && <ViewPanel />}
           {showFreeformPicker && <DrawPanel />}
+          {showFillPicker && <FillPanel />}
         </div>
       )}
     </div>
@@ -213,15 +221,31 @@ export function Toolbar() {
 // Panel toggle button (highlights when its panel is active)
 // ---------------------------------------------------------------------------
 
+function ToolbarGroup({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={[styles.toolbarGroup, className].filter(Boolean).join(" ")}>
+      {children}
+    </div>
+  );
+}
+
 function PanelBtn({
   id,
   current,
   onClick,
+  title,
   children,
 }: {
   id: PanelId;
   current: PanelId;
   onClick: (id: PanelId) => void;
+  title?: string;
   children: React.ReactNode;
 }) {
   const active = current === id;
@@ -232,6 +256,7 @@ function PanelBtn({
         .join(" ")}
       onClick={() => onClick(id)}
       data-testid={`${id}-button`}
+      title={title}
     >
       {children}
     </button>
@@ -344,14 +369,134 @@ const BLOCK_ELEMENTS = [
   "\u2593", // ▓ DARK SHADE
 ];
 
-const shortcutKeys = [
-  ...Object.values(UNICODE),
-  ...new Set(Object.values(ASCII)),
-  ...BLOCK_ELEMENTS,
-  ...Array.from(Array(127 - 33).keys())
-    .map((i) => i + 33)
-    .map((i) => String.fromCharCode(i)),
+const PRINTABLE_KEYS = Array.from(Array(127 - 33).keys())
+  .map((i) => i + 33)
+  .map((i) => String.fromCharCode(i));
+
+const CHAR_GROUPS: Array<{ label: string; keys: string[] }> = [
+  { label: "box drawing", keys: Object.values(UNICODE) },
+  { label: "ASCII lines", keys: [...new Set(Object.values(ASCII))] },
+  { label: "block shades", keys: BLOCK_ELEMENTS },
+  {
+    label: "punctuation",
+    keys: PRINTABLE_KEYS.filter((key) => /[^A-Za-z0-9]/.test(key)),
+  },
+  {
+    label: "numbers",
+    keys: PRINTABLE_KEYS.filter((key) => /[0-9]/.test(key)),
+  },
+  {
+    label: "uppercase",
+    keys: PRINTABLE_KEYS.filter((key) => /[A-Z]/.test(key)),
+  },
+  {
+    label: "lowercase",
+    keys: PRINTABLE_KEYS.filter((key) => /[a-z]/.test(key)),
+  },
 ];
+
+function FillPanel() {
+  const selectedFillTag = useAppStore((s) => s.selectedFillTag);
+  const selectedSwatch = selectedFillTag ? swatchById(selectedFillTag) : null;
+  const activeCustomColor =
+    selectedFillTag && !selectedSwatch
+      ? normalizeCustomFillTag(selectedFillTag) ?? "#c7d2fe"
+      : "#c7d2fe";
+  const [customColor, setCustomColor] = useState(activeCustomColor);
+  const rgb = hexToRgb(customColor);
+
+  useEffect(() => {
+    setCustomColor(activeCustomColor);
+  }, [activeCustomColor]);
+
+  const selectCustomColor = (value: string) => {
+    const normalized = normalizeCustomFillTag(value);
+    if (!normalized) {
+      return;
+    }
+    setCustomColor(normalized);
+    store.setSelectedFillTag(normalized);
+  };
+
+  return (
+    <div className={styles.fillPanel}>
+      <span className={styles.fillHint}>click inside a box to apply fill</span>
+      <div className={styles.fillSection}>
+        <span className={styles.fillLabel}>presets</span>
+        <div className={styles.fillSwatches} aria-label="preset fill colors">
+        {FILL_SWATCHES.map((swatch) => (
+          <button
+            key={swatch.id}
+            type="button"
+            className={[
+              styles.fillSwatch,
+              selectedFillTag === swatch.id ? styles.fillSwatchActive : "",
+            ].filter(Boolean).join(" ")}
+            style={{
+              background: swatch.fill,
+              borderColor: swatch.stroke,
+            }}
+            title={`${swatch.label} (${swatch.id})`}
+            onClick={() => store.setSelectedFillTag(swatch.id)}
+          />
+        ))}
+        </div>
+      </div>
+      <div className={styles.fillSection}>
+        <span className={styles.fillLabel}>RGB</span>
+        <input
+          type="color"
+          className={styles.fillColorInput}
+          value={normalizeCustomFillTag(customColor) ?? activeCustomColor}
+          title="custom RGB color"
+          onChange={(e) => selectCustomColor(e.target.value)}
+        />
+        <input
+          className={styles.fillHexInput}
+          value={customColor}
+          aria-label="custom fill hex color"
+          spellCheck={false}
+          onKeyDown={stopKeys}
+          onKeyPress={stopKeys}
+          onChange={(e) => {
+            setCustomColor(e.target.value);
+            selectCustomColor(e.target.value);
+          }}
+        />
+        <span className={styles.fillRgbValue}>
+          {rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : "invalid"}
+        </span>
+      </div>
+      <div className={styles.fillSection}>
+        <button
+          type="button"
+          className={[
+            styles.fillSwatch,
+            styles.fillSwatchClear,
+            selectedFillTag === null ? styles.fillSwatchActive : "",
+          ].filter(Boolean).join(" ")}
+          title="clear fill"
+          onClick={() => store.setSelectedFillTag(null)}
+        >
+          ∅
+        </button>
+        <span className={styles.fillLabel}>clear</span>
+      </div>
+    </div>
+  );
+}
+
+function hexToRgb(value: string): { r: number; g: number; b: number } | null {
+  const normalized = normalizeCustomFillTag(value);
+  if (!normalized) {
+    return null;
+  }
+  return {
+    r: Number.parseInt(normalized.slice(1, 3), 16),
+    g: Number.parseInt(normalized.slice(3, 5), 16),
+    b: Number.parseInt(normalized.slice(5, 7), 16),
+  };
+}
 
 function DrawPanel() {
   const [expanded, setExpanded] = useState(false);
@@ -373,20 +518,27 @@ function DrawPanel() {
       </div>
       {expanded && (
         <div className={styles.charPicker}>
-          {shortcutKeys.map((key, i) => (
-            <button
-              key={i}
-              className={[
-                styles.charBtn,
-                key === freeformCharacter ? styles.charBtnActive : "",
-              ].filter(Boolean).join(" ")}
-              onClick={() => {
-                store.setToolMode(ToolMode.FREEFORM);
-                store.setFreeformCharacter(key);
-              }}
-            >
-              {key}
-            </button>
+          {CHAR_GROUPS.map((group) => (
+            <div className={styles.charGroup} key={group.label}>
+              <span className={styles.charGroupLabel}>{group.label}</span>
+              <div className={styles.charGroupKeys}>
+                {group.keys.map((key, i) => (
+                  <button
+                    key={`${group.label}-${key}-${i}`}
+                    className={[
+                      styles.charBtn,
+                      key === freeformCharacter ? styles.charBtnActive : "",
+                    ].filter(Boolean).join(" ")}
+                    onClick={() => {
+                      store.setToolMode(ToolMode.FREEFORM);
+                      store.setFreeformCharacter(key);
+                    }}
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -403,20 +555,18 @@ function HelpContent() {
   const isShared = Boolean(route.shareSpec);
   const cmd = ctrlOrCmd();
 
-  const divider = "\u2500".repeat(40);
-
   return (
     <div className={styles.helpContent}>
       <div className={styles.helpExplainer}>
-        svgbob-gui: draw ASCII block diagrams on the canvas (left). The preview pane (right) renders live SVG via svgbob WASM. ASCII is the source of truth — commit <Kbd>diagram.txt</Kbd>, export <Kbd>.svg</Kbd> for docs.
+        Draw ASCII on the left; inspect live SVG on the right. Keep <Kbd>diagram.txt</Kbd> as source and export <Kbd>.svg</Kbd> for docs.
       </div>
       <div className={styles.helpDivider} />
       <div className={styles.helpSection}>svgbob + blocks</div>
       <div className={styles.helpGrid}>
         <span style={{ color: "var(--color-accent)" }}>preview</span>
-        <span>live SVG from canvas ASCII. Copy ASCII / export <Kbd>.txt</Kbd> + <Kbd>.svg</Kbd>. <Kbd>link</Kbd> shares <Kbd>#/bob/…</Kbd> URL.</span>
+        <span>live SVG from canvas ASCII. Use preview <Kbd>sync</Kbd>, <Kbd>1:1</Kbd>, or <Kbd>fit</Kbd>; copy ASCII or export <Kbd>.svg</Kbd>.</span>
         <span style={{ color: "var(--color-cyan)" }}>blocks</span>
-        <span>RTL templates (FIFO, APB, CDC, …). Ghost follows cursor; click to stamp. <Kbd>R</Kbd> rotate, <Kbd>H</Kbd>/<Kbd>V</Kbd> flip, <Kbd>esc</Kbd> cancel. Red ghost = overlap.</span>
+        <span>RTL templates with <Kbd>1x</Kbd>, <Kbd>2x</Kbd>, and <Kbd>3x</Kbd> scale. Ghost follows cursor; click to stamp. <Kbd>R</Kbd> rotate, <Kbd>H</Kbd>/<Kbd>V</Kbd> flip, <Kbd>esc</Kbd> cancel.</span>
       </div>
       <div className={styles.helpDivider} />
       <div className={styles.helpSection}>tools</div>
@@ -431,6 +581,10 @@ function HelpContent() {
         <span>drag start to end. <Kbd>shift</Kbd> changes orientation</span>
         <span style={{ color: "var(--color-warning)" }}>text</span>
         <span>click and type. <Kbd>enter</Kbd> commit, <Kbd>shift+enter</Kbd> newline</span>
+        <span style={{ color: "var(--color-danger)" }}>fill</span>
+        <span>pick a preset or custom RGB color, then click inside a box. <Kbd>alt+7</Kbd></span>
+        <span style={{ color: "var(--color-danger)" }}>erase</span>
+        <span>drag over cells to clear them. <Kbd>alt+8</Kbd></span>
       </div>
       <div className={styles.helpDivider} />
       <div className={styles.helpSection}>navigation</div>
