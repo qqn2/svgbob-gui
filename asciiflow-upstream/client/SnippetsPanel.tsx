@@ -9,6 +9,13 @@ import styles from "#asciiflow/client/snippets.module.css";
 import { TextField } from "#asciiflow/client/ui/components";
 import * as React from "react";
 
+const SNIPPET_GROUPS = [
+  { label: "basic", items: ["box", "arrow", "arr lbl", "down", "pipeline"] },
+  { label: "logic", items: ["reg/FF", "mux", "adder", "ICG", "rst sync"] },
+  { label: "memory", items: ["SRAM", "FIFO", "CSR"] },
+  { label: "interfaces", items: ["bus", "APB", "CDC", "scan", "IRQ"] },
+];
+
 function ParamDialog({
   snippet,
   onParamsChange,
@@ -128,11 +135,13 @@ export function SnippetsPanel() {
     }
   };
 
+  const snippetsByLabel = new Map(SNIPPETS.map((snippet) => [snippet.label, snippet]));
+
   return (
     <div className={styles.panel}>
       <span className={styles.label}>RTL blocks</span>
       <span className={styles.hint}>
-        ghost follows cursor · click to place · R rotate · H/V flip · Esc cancels
+        click to place · R rotate · H/V flip · Esc cancels
       </span>
       <span className={styles.scaleGroup} aria-label="block scale">
         <span className={styles.scaleLabel}>scale</span>
@@ -166,17 +175,28 @@ export function SnippetsPanel() {
           }}
         />
       )}
-      {SNIPPETS.map((s) => (
-        <button
-          key={s.label}
-          type="button"
-          className={styles.snippetBtn}
-          title={s.title}
-          onClick={() => handleClick(s)}
-        >
-          {s.label}
-        </button>
-      ))}
+      <div className={styles.snippetGroups}>
+        {SNIPPET_GROUPS.map((group) => (
+          <div className={styles.snippetGroup} key={group.label}>
+            <span className={styles.groupLabel}>{group.label}</span>
+            {group.items.map((label) => {
+              const snippet = snippetsByLabel.get(label);
+              if (!snippet) return null;
+              return (
+                <button
+                  key={snippet.label}
+                  type="button"
+                  className={styles.snippetBtn}
+                  title={snippet.title}
+                  onClick={() => handleClick(snippet)}
+                >
+                  {snippet.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

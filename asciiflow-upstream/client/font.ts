@@ -6,7 +6,7 @@
  */
 
 export const FONT_FAMILY =
-  '"Cascadia Mono", "Consolas", "SFMono-Regular", monospace';
+  '"Consolas", "Cascadia Mono", "SFMono-Regular", monospace';
 export const FONT_SIZE = 15;
 export const FONT_SPEC = `${FONT_SIZE}px ${FONT_FAMILY}`;
 

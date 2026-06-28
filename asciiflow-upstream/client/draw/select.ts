@@ -153,7 +153,7 @@ export class DrawSelect extends AbstractDrawFunction {
     if (isSpecial(store.currentCanvas.committed.get(position))) {
       return "move";
     }
-    return "default";
+    return "crosshair";
   }
 
   /**

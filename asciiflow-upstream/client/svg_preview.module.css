@@ -20,9 +20,22 @@
   flex-wrap: wrap;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .title {
   font-weight: 600;
   color: var(--color-text);
+}
+
+.viewControls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .actions {
@@ -38,10 +51,15 @@
   font-family: var(--font-ui) !important;
 }
 
+.actionBtnActive {
+  color: var(--color-accent) !important;
+  font-weight: 600 !important;
+}
+
 .svgMount {
   flex: 1;
   overflow: auto;
-  padding: 32px 48px 96px;
+  padding: 64px 96px 160px;
   display: block;
   background: var(--color-canvas-bg);
 }

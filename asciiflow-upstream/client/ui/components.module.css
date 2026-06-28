@@ -7,8 +7,8 @@
    --------------------------------------------------------------------------- */
 
 .btn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-md);
   border: var(--border);
   background: var(--color-bg);
@@ -76,8 +76,8 @@
 }
 
 .dialog {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   background: var(--color-bg);
   color: var(--color-text);
   border: var(--border);
@@ -138,8 +138,8 @@
   gap: var(--space-md);
   width: 100%;
   padding: var(--space-sm) var(--space-lg);
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   background: none;
   border: none;
   color: var(--color-text);
@@ -164,8 +164,8 @@
 
 .selectLabel {
   display: block;
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
 }
 
 .selectLabelText {
@@ -175,8 +175,8 @@
 }
 
 .select {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-md);
   border: var(--border);
   background: var(--color-bg);
@@ -191,8 +191,8 @@
 
 .textFieldLabel {
   display: block;
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
 }
 
 .textFieldLabelText {
@@ -202,8 +202,8 @@
 }
 
 .textField {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-sm) var(--space-md);
   border: var(--border);
   background: var(--color-bg);
@@ -241,8 +241,8 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: var(--space-md) var(--space-lg);
   background: var(--color-bg-raised);
   color: var(--color-text);
@@ -285,7 +285,7 @@
 .kbd {
   display: inline;
   font-family: var(--font-mono);
-  font-size: 0.92em;
+  font-size: 0.86em;
   color: var(--color-text-muted);
   font-weight: 400;
   white-space: nowrap;

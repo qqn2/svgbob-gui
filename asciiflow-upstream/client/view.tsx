@@ -92,6 +92,7 @@ export const View = ({ ...rest }: React.HTMLAttributes<HTMLCanvasElement>) => {
         tabIndex={0}
         style={{
           backgroundColor: colors.background,
+          cursor: "crosshair",
           touchAction: "none",
           position: "absolute",
           left: 0,

@@ -37,7 +37,7 @@ export abstract class AbstractDrawFunction implements IDrawFunction {
   move(position: Vector, modifierKeys: IModifierKeys): void {}
   end(): void {}
   getCursor(position: Vector, modifierKeys: IModifierKeys): string {
-    return "default";
+    return "crosshair";
   }
   handleKey(value: string, modifierKeys: IModifierKeys): void {}
   cleanup(): void {}

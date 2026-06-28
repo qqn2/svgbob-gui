@@ -7,20 +7,20 @@
 }
 
 .label {
-  font-size: var(--font-size);
+  font-size: var(--font-size-ui);
   color: var(--color-text-muted);
   margin-right: 6px;
 }
 
 .hint {
-  font-size: var(--font-size);
+  font-size: var(--font-size-ui);
   color: var(--color-text-muted);
   margin-right: 8px;
 }
 
 .snippetBtn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: 2px 8px;
   background: var(--color-bg-raised);
   border: var(--border);
@@ -46,8 +46,34 @@
 }
 
 .scaleLabel {
-  font-size: var(--font-size);
+  font-size: var(--font-size-ui);
   color: var(--color-text-muted);
+}
+
+.snippetGroups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  width: 100%;
+}
+
+.snippetGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  border-right: var(--border);
+}
+
+.snippetGroup:last-child {
+  border-right: none;
+}
+
+.groupLabel {
+  color: var(--color-text-muted);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  margin-right: 2px;
 }
 
 .paramForm {
@@ -62,9 +88,9 @@
 }
 
 .paramTitle {
-  font-size: var(--font-size);
+  font-size: var(--font-size-ui);
   color: var(--color-text);
-  font-weight: bold;
+  font-weight: 600;
   width: 100%;
 }
 
@@ -74,8 +100,8 @@
 }
 
 .paramBtn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-ui);
   padding: 2px 10px;
   background: var(--color-bg-raised);
   border: var(--border);
