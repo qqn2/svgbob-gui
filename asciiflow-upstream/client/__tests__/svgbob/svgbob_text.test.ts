@@ -4,7 +4,7 @@ import {
   collectFilledBoxes,
   collectFillTags,
   stripFillTags,
-} from "#asciiflow/client/svgbob_text";
+} from "#asciiflow/client/lib/svgbob/svgbob_text";
 
 describe("svgbob_text", () => {
   it("collects fill tags from diagram text", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAutoFitTextPatch } from "#asciiflow/client/text_box_autofit";
+import { buildAutoFitTextPatch } from "#asciiflow/client/lib/box/text_box_autofit";
 import { Layer } from "#asciiflow/client/layer";
 import { textToLayer, layerToText } from "#asciiflow/client/text_utils";
 import { Vector } from "#asciiflow/client/vector";

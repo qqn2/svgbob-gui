@@ -1,7 +1,7 @@
 import {
   asciiDiagram,
   asciiDiagramLines,
-} from "#asciiflow/client/snippet_template";
+} from "#asciiflow/client/lib/snippets/snippet_template";
 import { store } from "#asciiflow/client/store";
 
 export interface SnippetParams {

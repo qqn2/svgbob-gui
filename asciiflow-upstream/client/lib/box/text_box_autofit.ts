@@ -1,4 +1,4 @@
-import { DetectedBox, findBoxAt } from "#asciiflow/client/box_detect";
+import { DetectedBox, findBoxAt } from "#asciiflow/client/lib/box/box_detect";
 import { UNICODE } from "#asciiflow/client/constants";
 import { ILayerView, Layer } from "#asciiflow/client/layer";
 import { Vector } from "#asciiflow/client/vector";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { UNICODE } from "#asciiflow/client/constants";
-import { asciiDiagram, asciiDiagramLines } from "#asciiflow/client/snippet_template";
+import { asciiDiagram, asciiDiagramLines } from "#asciiflow/client/lib/snippets/snippet_template";
 
 describe("snippet_template", () => {
   it("converts readable ASCII boxes to clean drawing characters", () => {

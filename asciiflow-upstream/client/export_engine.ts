@@ -8,7 +8,7 @@ import {
   applyFillStylesToSvg,
   layerToSvgbobText,
   stripFillTags,
-} from "#asciiflow/client/svgbob_text";
+} from "#asciiflow/client/lib/svgbob/svgbob_text";
 
 export { parseSvgSize, scaleSvgMarkup } from "#asciiflow/client/export_svg_utils";
 

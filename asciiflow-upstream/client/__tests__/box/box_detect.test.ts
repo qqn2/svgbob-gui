@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFillPatch, findBoxAt, pickLabelRow } from "#asciiflow/client/box_detect";
+import { buildFillPatch, findBoxAt, pickLabelRow } from "#asciiflow/client/lib/box/box_detect";
 import { Layer } from "#asciiflow/client/layer";
 import { textToLayer } from "#asciiflow/client/text_utils";
 import { Vector } from "#asciiflow/client/vector";

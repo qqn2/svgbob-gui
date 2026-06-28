@@ -3,9 +3,9 @@ import {
   Snippet,
   SnippetParams,
   beginBlockPlacement,
-} from "#asciiflow/client/snippets";
+} from "#asciiflow/client/lib/snippets/snippets";
 import { store } from "#asciiflow/client/store";
-import styles from "#asciiflow/client/snippets.module.css";
+import styles from "#asciiflow/client/lib/snippets/snippets.module.css";
 import { TextField } from "#asciiflow/client/ui/components";
 import * as React from "react";
 

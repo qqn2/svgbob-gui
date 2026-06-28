@@ -4,7 +4,7 @@ import {
   FILL_SWATCHES,
   normalizeCustomFillTag,
   swatchById,
-} from "#asciiflow/client/fill_palette";
+} from "#asciiflow/client/lib/svgbob/fill_palette";
 import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
 import { layerToText } from "#asciiflow/client/text_utils";

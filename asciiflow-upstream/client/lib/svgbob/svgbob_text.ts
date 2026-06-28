@@ -1,7 +1,7 @@
 import {
   FILL_TAG_PATTERN,
   fillStyleForTag,
-} from "#asciiflow/client/fill_palette";
+} from "#asciiflow/client/lib/svgbob/fill_palette";
 import { ILayerView } from "#asciiflow/client/layer";
 import { layerToText } from "#asciiflow/client/text_utils";
 

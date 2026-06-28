@@ -10,14 +10,16 @@
     "asciiflow-upstream/client/render_errors.ts",
     "asciiflow-upstream/client/renderer.ts",
     "asciiflow-upstream/client/layer_placement.ts",
-    "asciiflow-upstream/client/snippets.ts",
+    "asciiflow-upstream/client/lib/snippets/snippets.ts",
+    "asciiflow-upstream/client/lib/snippets/snippet_template.ts",
     "asciiflow-upstream/client/svgbob_storage.ts",
     "asciiflow-upstream/client/text_utils.ts",
     "asciiflow-upstream/client/draw/place_block.ts",
-    "asciiflow-upstream/client/box_detect.ts",
-    "asciiflow-upstream/client/fill_palette.ts",
-    "asciiflow-upstream/client/svgbob_text.ts",
+    "asciiflow-upstream/client/lib/box/box_detect.ts",
+    "asciiflow-upstream/client/lib/box/text_box_autofit.ts",
+    "asciiflow-upstream/client/lib/svgbob/fill_palette.ts",
+    "asciiflow-upstream/client/lib/svgbob/svgbob_text.ts",
     "asciiflow-upstream/client/draw/fill.ts",
-    "asciiflow-upstream/client/**/*.test.ts"
+    "asciiflow-upstream/client/__tests__/**/*.test.ts"
   ]
 }

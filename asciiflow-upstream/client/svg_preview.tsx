@@ -2,7 +2,7 @@ import * as React from "react";
 import { ExportDialog } from "#asciiflow/client/ExportDialog";
 import { exportLayer, renderAsciiToSvg } from "#asciiflow/client/export_engine";
 import { store, useAppStore } from "#asciiflow/client/store";
-import { layerToSvgbobText } from "#asciiflow/client/svgbob_text";
+import { layerToSvgbobText } from "#asciiflow/client/lib/svgbob/svgbob_text";
 import { layerToText } from "#asciiflow/client/text_utils";
 import {
   initRenderer,

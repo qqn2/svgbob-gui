@@ -2,7 +2,7 @@ import {
   buildFillPatch,
   findBoxAt,
   pickLabelRow,
-} from "#asciiflow/client/box_detect";
+} from "#asciiflow/client/lib/box/box_detect";
 import { AbstractDrawFunction } from "#asciiflow/client/draw/function";
 import { store } from "#asciiflow/client/store";
 import { Vector } from "#asciiflow/client/vector";

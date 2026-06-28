@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SNIPPETS, resolveSnippetText } from "#asciiflow/client/snippets";
+import { SNIPPETS, resolveSnippetText } from "#asciiflow/client/lib/snippets/snippets";
 
 describe("snippets", () => {
   it("uses clean box-drawing characters for built-in RTL blocks", () => {

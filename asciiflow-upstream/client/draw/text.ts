@@ -2,7 +2,7 @@ import { Box } from "#asciiflow/client/common";
 import { AbstractDrawFunction } from "#asciiflow/client/draw/function";
 import { Layer } from "#asciiflow/client/layer";
 import { store, IModifierKeys } from "#asciiflow/client/store";
-import { buildAutoFitTextPatch } from "#asciiflow/client/text_box_autofit";
+import { buildAutoFitTextPatch } from "#asciiflow/client/lib/box/text_box_autofit";
 import { Vector } from "#asciiflow/client/vector";
 
 export class DrawText extends AbstractDrawFunction {

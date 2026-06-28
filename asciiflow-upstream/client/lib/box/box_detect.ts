@@ -1,4 +1,4 @@
-import { FILL_TAG_PATTERN } from "#asciiflow/client/fill_palette";
+import { FILL_TAG_PATTERN } from "#asciiflow/client/lib/svgbob/fill_palette";
 import { ILayerView, Layer } from "#asciiflow/client/layer";
 import { Vector } from "#asciiflow/client/vector";
 
