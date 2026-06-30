@@ -14,6 +14,7 @@ export function loadAsciiDiagram(text: string, at = new Vector(5, 5)): void {
 
 export function seedDefaultDiagramIfEmpty(): void {
   if (store.currentCanvas.committed.size() > 0) return;
+  if (!DEFAULT_DIAGRAM.trim()) return;
   try {
     if (localStorage.getItem(SEEDED_KEY)) return;
     localStorage.setItem(SEEDED_KEY, "1");

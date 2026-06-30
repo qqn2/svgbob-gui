@@ -106,15 +106,16 @@ export function SvgPreview() {
 
   React.useEffect(() => {
     if (!ready || !isRendererReady()) return;
+    let cancelled = false;
     const id = window.setTimeout(() => {
       const preview = layerToSvgbobText(store.currentCanvas.combined);
       const source = layerToText(store.currentCanvas.committed);
       setSourceAscii(source);
       setRenderError(null);
-      setSvg("");
 
       if (!preview.trim()) {
         setMs(null);
+        setSvg("");
         setDims(null);
         setSvgSize(null);
         store.setRenderState("ok");
@@ -124,6 +125,7 @@ export function SvgPreview() {
       const t0 = performance.now();
       Promise.resolve(renderAsciiToSvg(preview))
         .then((result) => {
+          if (cancelled) return;
           setMs(performance.now() - t0);
           setSvg(result);
           setDims(parseSvgDims(result));
@@ -132,6 +134,7 @@ export function SvgPreview() {
           store.setRenderState("ok");
         })
         .catch((err) => {
+          if (cancelled) return;
           setMs(null);
           setSvg("");
           setDims(null);
@@ -142,16 +145,20 @@ export function SvgPreview() {
           store.setRenderState("error");
         });
     }, 180);
-    return () => window.clearTimeout(id);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
   }, [canvasVersion, ready, route]);
 
   React.useEffect(() => {
     const element = mountRef.current;
     if (!element) return;
     const measure = () => {
+      const rect = element.getBoundingClientRect();
       setMountSize({
-        width: element.clientWidth,
-        height: element.clientHeight,
+        width: rect.width,
+        height: rect.height,
       });
     };
     measure();

@@ -12,22 +12,7 @@ import {
   loadFromHash,
 } from './storage';
 
-const DEFAULT_DIAGRAM = `
-         +----------+     +----------+     +----------+
-         |          |     |          |     |          |
-  IN --->| DECODE   +---->|  EXEC    +---->| WRITEBACK+---> OUT
-         |          |     |          |     |          |
-         +----+-----+     +----+-----+     +----+-----+
-              |                |                |
-              v                v                v
-         +----------+     +----------+     +----------+
-         |  REG A   |     |  REG B   |     |  REG C   |
-         +----------+     +----------+     +----------+
-
-  CLK ---+----------------+----------------+
-         |                |                |
-         v                v                v
-`.trim();
+const DEFAULT_DIAGRAM = '';
 
 let debounceTimer: ReturnType<typeof setTimeout>;
 const DEBOUNCE_MS = 180;

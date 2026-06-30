@@ -6,22 +6,7 @@ import { initResizer } from './resizer';
 import { initDrawTools, refreshOverlay } from './drawTools';
 import { applyTheme, loadTheme, toggleTheme } from './theme';
 import { saveToLocalStorage, loadFromLocalStorage, saveToHash, loadFromHash, } from './storage';
-const DEFAULT_DIAGRAM = `
-         +----------+     +----------+     +----------+
-         |          |     |          |     |          |
-  IN --->| DECODE   +---->|  EXEC    +---->| WRITEBACK+---> OUT
-         |          |     |          |     |          |
-         +----+-----+     +----+-----+     +----+-----+
-              |                |                |
-              v                v                v
-         +----------+     +----------+     +----------+
-         |  REG A   |     |  REG B   |     |  REG C   |
-         +----------+     +----------+     +----------+
-
-  CLK ---+----------------+----------------+
-         |                |                |
-         v                v                v
-`.trim();
+const DEFAULT_DIAGRAM = '';
 let debounceTimer;
 const DEBOUNCE_MS = 180;
 function syncThemeButton(theme) {
