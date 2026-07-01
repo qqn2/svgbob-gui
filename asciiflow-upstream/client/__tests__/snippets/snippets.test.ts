@@ -81,18 +81,12 @@ describe("snippets", () => {
         "sequence",
         "state tree",
         "chip shell",
-        "ctrl core",
         "io cluster",
         "clk tree",
         "rst tree",
-        "guard path",
         "auth flow",
-        "cert chain",
         "pad mux",
         "mem map",
-        "reg access",
-        "iface ss",
-        "storage ss",
         "serial blk",
       ])
     );
@@ -109,6 +103,28 @@ describe("snippets", () => {
     expect(SNIPPET_DISPLAY_LABELS["iface ss"]).toBe("Interface subsystem");
     expect(SNIPPET_DISPLAY_LABELS["storage ss"]).toBe("Storage subsystem");
     expect(SNIPPET_DISPLAY_LABELS["serial blk"]).toBe("Serial block");
+  });
+
+  it("resolves parametric snippets from default literals in raw ASCII", () => {
+    const regFf = SNIPPETS.find((snippet) => snippet.label === "reg/FF");
+    expect(regFf).toBeDefined();
+
+    const defaultText = resolveSnippetText(regFf!);
+    expect(defaultText).toMatch(/[\u250c\u2510\u2514\u2518\u2502\u2500]/);
+    expect(defaultText).toContain('"FF"');
+    expect(defaultText).toContain('"CLK"');
+
+    const customText = resolveSnippetText(regFf!, { label: "REG", clk: "PCLK" });
+    expect(customText).toContain('"REG"');
+    expect(customText).toContain('"PCLK"');
+    expect(customText).not.toContain('"FF"');
+    expect(customText).not.toContain('"CLK"');
+
+    const sram = SNIPPETS.find((snippet) => snippet.label === "SRAM");
+    expect(resolveSnippetText(sram!, { busWidth: 64 })).toContain("[63:0]");
+
+    const bus = SNIPPETS.find((snippet) => snippet.label === "bus");
+    expect(resolveSnippetText(bus!, { busWidth: 64 })).toContain("[64]");
   });
 
   it("keeps dense sidebar previews readable without changing placed block text", () => {

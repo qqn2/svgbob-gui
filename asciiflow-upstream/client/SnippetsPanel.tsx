@@ -15,11 +15,11 @@ export const SNIPPET_GROUPS = [
   { label: "Flowchart", items: ["swimlane", "sequence", "state tree", "plot axes", "arrow", "arr lbl", "down"] },
   { label: "RTL Basics", items: ["box", "pipeline", "bus", "fanout"] },
   { label: "Logic", items: ["reg/FF", "mux", "adder", "ICG", "rst sync"] },
-  { label: "System", items: ["chip shell", "ctrl core", "io cluster", "data path", "fanout"] },
+  { label: "System", items: ["chip shell", "io cluster", "data path", "fanout"] },
   { label: "Clock / Reset", items: ["clk tree", "rst tree", "CDC", "scan"] },
-  { label: "Memory / Registers", items: ["SRAM", "FIFO", "CSR", "mem map", "reg access"] },
-  { label: "Security", items: ["guard path", "auth flow", "cert chain"] },
-  { label: "Interfaces", items: ["bus", "APB", "IRQ", "pad mux", "iface ss", "storage ss", "serial blk"] },
+  { label: "Memory / Registers", items: ["SRAM", "FIFO", "mem map"] },
+  { label: "Security", items: ["auth flow"] },
+  { label: "Interfaces", items: ["bus", "APB", "IRQ", "pad mux", "serial blk"] },
 ];
 
 export const SNIPPET_DISPLAY_LABELS: Record<string, string> = {
@@ -47,7 +47,6 @@ export const SNIPPET_DISPLAY_LABELS: Record<string, string> = {
   ICG: "Clock gate",
   "rst sync": "Reset sync",
   "chip shell": "Chip shell",
-  "ctrl core": "Control core",
   "io cluster": "IO cluster",
   "data path": "Data path",
   fanout: "Fanout",

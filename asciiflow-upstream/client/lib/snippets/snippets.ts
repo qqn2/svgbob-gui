@@ -1,6 +1,7 @@
 import {
   asciiDiagram,
   asciiDiagramLines,
+  asciiDiagramText,
 } from "#asciiflow/client/lib/snippets/snippet_template";
 import { store } from "#asciiflow/client/store";
 
@@ -41,18 +42,76 @@ function fitLabel(value: unknown, width: number): string {
   return quoteText(value).slice(0, width).padEnd(width);
 }
 
+function renderTextParam(
+  value: unknown,
+  width?: number
+): string {
+  return width ? fitLabel(value, width) : quoteText(value);
+}
+
+function applyBusWidthSubstitutions(
+  text: string,
+  defaults: SnippetParams,
+  merged: SnippetParams
+): string {
+  const defWidth = defaults.busWidth;
+  const newWidth = merged.busWidth;
+  if (defWidth === undefined || newWidth === undefined || defWidth === newWidth) {
+    return text;
+  }
+  const defMsb = defWidth - 1;
+  const newMsb = newWidth - 1;
+  return text
+    .replaceAll(`[${defMsb}:0]`, `[${newMsb}:0]`)
+    .replaceAll(`[${defWidth}]`, `[${newWidth}]`);
+}
+
+/**
+ * Parametric diagram authored with default literals in raw +|-|> ASCII.
+ * Substitutes params, then converts arrows and box corners (WYSIWYG editing).
+ */
+function makeParamDiagram(
+  source: string,
+  defaults: SnippetParams,
+  widths: Partial<Record<keyof SnippetParams, number>> = {}
+): (p: SnippetParams) => string {
+  return (p) => {
+    const merged = { ...DEFAULT_PARAMS, ...defaults, ...p };
+    let text = source;
+    for (const key of TEXT_PARAM_KEYS) {
+      const defVal = defaults[key as keyof SnippetParams];
+      const val = merged[key as keyof SnippetParams];
+      if (defVal === undefined || val === undefined) {
+        continue;
+      }
+      const width = widths[key as keyof SnippetParams];
+      const defRendered = renderTextParam(defVal, width);
+      const newRendered = renderTextParam(val, width);
+      if (defRendered !== newRendered) {
+        text = text.replace(defRendered, newRendered);
+      }
+    }
+    text = applyBusWidthSubstitutions(text, defaults, merged);
+    return asciiDiagramText(text);
+  };
+}
+
 /** Substitute {{key}} placeholders in snippet templates. */
 export function applySnippetParams(
   text: string,
   params: SnippetParams
 ): string {
   const merged = { ...DEFAULT_PARAMS, ...params };
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
+  return text.replace(/\{\{(\w+)(?::(\d+))?\}\}/g, (_, key: string, width: string) => {
     const v = merged[key as keyof SnippetParams];
     if (v === undefined) {
       return "";
     }
-    return TEXT_PARAM_KEYS.has(key as keyof SnippetParams) ? quoteText(v) : String(v);
+    if (TEXT_PARAM_KEYS.has(key as keyof SnippetParams)) {
+      const quoted = quoteText(v);
+      return width ? quoted.slice(0, +width).padEnd(+width) : quoted;
+    }
+    return String(v);
   });
 }
 
@@ -184,11 +243,11 @@ export const SNIPPETS: Snippet[] = [
     label: "state tree",
     title: "State / branch tree",
     text: asciiDiagram`
-             (0)
-            /   \
-          (1)   (2)
-          / \     \
-        (3) (4)   (5)
+             ("0")
+            /     \
+          ("1")   ("2")
+          /    \      \
+        ("3") ("4")   ("5")
     `,
   },
   {
@@ -207,11 +266,15 @@ export const SNIPPETS: Snippet[] = [
     title: "Empty labeled box",
     parametric: true,
     defaultParams: { label: "LABEL" },
-    text: asciiDiagram`
-      +----------+
-      |{{label}} |
-      +----------+
-    `,
+    text: makeParamDiagram(
+      `
+      +------------------+
+      | "LABEL"          |
+      +------------------+
+      `,
+      { label: "LABEL" },
+      { label: 10 }
+    ),
   },
   {
     label: "arrow",
@@ -222,8 +285,11 @@ export const SNIPPETS: Snippet[] = [
     label: "arr lbl",
     title: "Labeled right arrow",
     parametric: true,
-    defaultParams: { label: quoteText("sig") },
-    text: asciiDiagram`---[{{label}}]-->`,
+    defaultParams: { label: "sig" },
+    text: makeParamDiagram(
+      `---["sig"]--->`,
+      { label: "sig" }
+    ),
   },
   {
     label: "down",
@@ -238,11 +304,11 @@ export const SNIPPETS: Snippet[] = [
     label: "pipeline",
     title: "3-stage pipeline",
     text: asciiDiagram`
-      +----------+     +----------+     +----------+
-      |          |     |          |     |          |
-      |"STAGE 1" +---->|"STAGE 2" +---->|"STAGE 3" |
-      |          |     |          |     |          |
-      +----------+     +----------+     +----------+
+      +---------- +     +-----------+      +-----------+
+      |           |     |           |      |           |
+      | "STAGE 1" |---->| "STAGE 2" |----->| "STAGE 3" |
+      |           |     |           |      |           |
+      +-----------+     +-----------+      +-----------+
     `,
   },
   {
@@ -250,14 +316,17 @@ export const SNIPPETS: Snippet[] = [
     title: "D flip-flop / register",
     parametric: true,
     defaultParams: { label: "FF", clk: "CLK" },
-    text: (p) =>
-      asciiDiagram`
-            +-------+
-      D --->+D   Q  +---> Q
-            | ${fitLabel(p.label ?? "FF", 5)} |
-      ${quoteText(p.clk)} -->+>      |
-            +-------+
+    text: makeParamDiagram(
+      `
+               +--------------+
+         D --->+ D         Q  +---> Q
+               |   "FF"       |
+      "CLK" ---+>             |
+               +--------------+
       `,
+      { label: "FF", clk: "CLK" },
+      { label: 8 }
+    ),
   },
   {
     label: "mux",
@@ -295,23 +364,28 @@ export const SNIPPETS: Snippet[] = [
     title: "SRAM / memory block",
     parametric: true,
     defaultParams: { busWidth: 32 },
-    text: (p) =>
-      asciiDiagram`
+    text: makeParamDiagram(
+      `
               +----------+
-      "ADDR" -->+          |
-              |  "SRAM"  +<--> "DATA[${(p.busWidth ?? 32) - 1}:0]"
-        "WE" -->+          |
-        "CE" -->+  "NxM"   |
-      "CLK"  -->+          |
+    "ADDR" -->+          |
+              |  "SRAM"  +<--> "DATA[31:0]"
+      "WE" -->+          |
+      "CE" -->+  "NxM"   |
+    "CLK"  -->+          |
               +----------+
       `,
+      { busWidth: 32 }
+    ),
   },
   {
     label: "bus",
     title: "Bus / bundle annotation",
     parametric: true,
     defaultParams: { busWidth: 32 },
-    text: (p) => asciiDiagram`=====[${p.busWidth}]=====>`,
+    text: makeParamDiagram(
+      `=====[32]=====>`,
+      { busWidth: 32 }
+    ),
   },
   {
     label: "FIFO",
@@ -330,73 +404,69 @@ export const SNIPPETS: Snippet[] = [
     title: "APB-lite slave stub",
     parametric: true,
     defaultParams: { clk: "PCLK", busWidth: 32 },
-    text: (p) =>
-      asciiDiagram`
-            +-----------+
-      ${quoteText(p.clk)} -->+           |
-            |  "APB"    +---> "PRDATA[${(p.busWidth ?? 32) - 1}:0]"
-            | "Slave"   +<--- "PWDATA[31:0]"
-      "PSEL" -->+           |
-            +-----------+
+    text: makeParamDiagram(
+      `
+                +---------------------+
+      "PCLK" -->+                     |
+                |  "APB"              +---> "PRDATA[31:0]"
+                | "Slave"             +<--- "PWDATA[31:0]"
+      "PSEL" -->+                     |
+                +---------------------+
       `,
+      { clk: "PCLK", busWidth: 32 }
+    ),
   },
   {
     label: "ICG",
     title: "Clock gate / ICG",
     parametric: true,
     defaultParams: { clk: "CLK_IN" },
-    text: (p) =>
-      asciiDiagram`
-      ${quoteText(p.clk)} -->+>--+---> "CLK_OUT"
-                 |"ICG"|
-             "EN"--+---+
+    text: makeParamDiagram(
+      `
+      "CLK_IN" ---+>----+----> "CLK_OUT"
+                  |"ICG"|
+          "EN" -->|     |
+                  +-----+
       `,
+      { clk: "CLK_IN" }
+    ),
   },
   {
     label: "rst sync",
     title: "Reset synchronizer",
     parametric: true,
     defaultParams: { clk: "clk", rst: "rst_async" },
-    text: (p) =>
-      asciiDiagram`
-      ${quoteText(p.rst)} -->+>|---> "rst_sync"
-                   |S|
-              ${quoteText(p.clk)}+>|
-                   +-+
+    text: makeParamDiagram(
+      `
+  "rst_async"  -->+------+--> "rst_sync"
+                  |"sync"|
+         "clk" -->|      |
+                  +------+
       `,
+      { clk: "clk", rst: "rst_async" }
+    ),
   },
   {
     label: "CDC",
     title: "Clock-domain crossing boundary",
     text: asciiDiagram`
-        "CLK_A"          "CLK_B"
-        +------+  "CDC"  +------+
-        |"blk_A"========>+"blk_B"|
-        +------+         +------+
+          "CLK_A"             "CLK_B"
+        +---------+  "CDC"   +---------+
+        | "blk_A" |=========>| "blk_B" |
+        +---------+          +---------+
     `,
   },
   {
     label: "scan",
     title: "Scan mux",
-    text: asciiDiagramLines([
-      '"func_in" -->+\\',
-      '           |"MUX"+--> "out"',
-      '"scan_in" -->+/',
-      '     "scan_en"',
-    ]),
-  },
-  {
-    label: "CSR",
-    title: "CSR / register block",
-    parametric: true,
-    defaultParams: { label: "REGS" },
-    text: (p) =>
-      asciiDiagram`
-              +-----------+
-      "APB" -->+ "CSR"     |
-              | ${fitLabel(p.label ?? "REGS", 8)} +--> "ctrl_o"
-              +-----------+
-      `,
+    text: asciiDiagram`
+     "func_in" ──►┬─────.
+                  │"MUX" )──► "out"
+     "scan_in" ──►┴─────'
+                     ▲
+                     │
+                "scan_en"
+    `,
   },
   {
     label: "IRQ",
@@ -452,7 +522,7 @@ export const SNIPPETS: Snippet[] = [
     text: asciiDiagram`
       "osc_clk" --->+----------+     +-----------+     +-------------+
                     | "clk mux"+---->| "divider" +---->| "clk gate"  |
-      "pll_clk" --->+----------+     +-----------+     +------+------+ 
+      "pll_clk" --->+----------+     +-----------+     +------+------+
                                                                 |
                          +--------------------------------------+---+
                          |              |              |            |
@@ -476,26 +546,11 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
-    label: "guard path",
-    title: "Guarded data path with policy checks",
-    text: asciiDiagram`
-      "master" --->+-------------+     +--------------+     +-------------+
-                   | "fabric"    +---->| "guard"      +---->| "target"    |
-                   +------+------+     +------+-------+     +-------------+
-                          |                   |
-                          v                   v
-                    "addr/user"        +--------------+
-                                       | "policy"     |
-      "cfg bus" ---------------------->| "regs"       +----> "error/deny"
-                                       +--------------+
-    `,
-  },
-  {
     label: "auth flow",
     title: "Generic image authentication flow",
     text: asciiDiagram`
       +-------------+        +-------------+        +-------------+
-      | "image"     +------->| "hash"      +------->| "compare"   |
+      | "image"     +------->| "hash"      +------->| "compare"   |----> "valid"
       +------+------+        +-------------+        +------+------+
              |                                            ^
              v                                            |
@@ -506,27 +561,8 @@ export const SNIPPETS: Snippet[] = [
                                   |
                             +-----+------+
                             | "root key" |
-                            | "OTP"      |
+                            |   "OTP"    |
                             +------------+
-    `,
-  },
-  {
-    label: "cert chain",
-    title: "Generic certificate-chain authorization flow",
-    text: asciiDiagram`
-      +-------------+     +----------------+     +----------------+
-      | "cert"      +---->| "subject key"  +---->| "auth check"   |
-      +------+------+     +----------------+     +-------+--------+
-             |                                           |
-             v                                           v
-      +-------------+     +----------------+     +----------------+
-      | "signature" +---->| "root key"     +---->| "enable"       |
-      +-------------+     +----------------+     +----------------+
-             ^
-             |
-      +-------------+
-      | "scenario"  |
-      +-------------+
     `,
   },
   {
@@ -538,7 +574,7 @@ export const SNIPPETS: Snippet[] = [
       +-------------------+       +-----+------+       +-----+------+       +---+----+
       +-------------------+             ^                    ^                  |
       | "pin logic"       +-------------+                    |                  v
-      +-------------------+                                  |              "pin"
+      +-------------------+                                  |                "pin"
       +-------------------+                                  |
       | "test controls"   +----------------------------------+
       +-------------------+
@@ -559,64 +595,8 @@ export const SNIPPETS: Snippet[] = [
       "0xA000_0000" +-----------------------------+
                     | "Ext. Device"    "(1024MiB)"|
       "0xE000_0000" +-----------------------------+
-                    | "System / PPB"             |
+                    | "System / PPB"              |
       "0xFFFF_FFFF" +-----------------------------+
-    `,
-  },
-  {
-    label: "reg access",
-    title: "Config register access and field fanout",
-    text: asciiDiagram`
-      "cfg bus" --->+--------------+      +--------------+
-                    | "addr decode"+----->| "reg bank"   +----> "status_i"
-                    +------+-------+      +------+-------+
-                           |                     |
-                           v                     v
-                    +--------------+      +--------------+
-                    | "write data" |      | "ctrl fields" +----> "ctrl_o"
-                    +--------------+      +--------------+
-    `,
-  },
-  {
-    label: "iface ss",
-    title: "Generic external-interface subsystem block",
-    text: asciiDiagram`
-      +--------------------------- "Iface SS" ---------------------------+
-      |                                                                 |
-      | +------------+  "sideband"  +---------------+     +----------+  |
-      | | "cfg regs" +------------->| "controller"  +---->| "fabric" |  |
-      | +-----+------+              | "link layer"  |     +----------+  |
-      |       |                     +-------+-------+                   |
-      |       v                             |                           |
-      | +------------+     "phy bus"        v                           |
-      | | "phy"      |<----------------+ +-----------+                  |
-      | +-----+------+                 | | "RAM"     |                  |
-      |       |                        | +-----------+                  |
-      |       v                        |                                |
-      | "pins"                    "interrupt"                           |
-      +-----------------------------------------------------------------+
-    `,
-  },
-  {
-    label: "storage ss",
-    title: "Generic storage-interface subsystem block",
-    text: asciiDiagram`
-      +-------------------------- "Storage SS" --------------------------+
-      |                                                                 |
-      | "data/cmd/clk" ->+------------+ "pad/tune" +------------+       |
-      |                  | "phy"      |<---------->| "ctrl"     |       |
-      |                  +-----+------+            +-----+------+       |
-      |                        ^                         |              |
-      |                        |                         v              |
-      |                  +-----+------+            +------------+       |
-      |                  | "clk div"  |            | "RAM"      |       |
-      |                  +------------+            +-----+------+       |
-      |                                                   |              |
-      |                                                   v              |
-      |                                             +------------+       |
-      |                                             | "fabric"   |       |
-      |                                             +------------+       |
-      +-----------------------------------------------------------------+
     `,
   },
   {
@@ -625,37 +605,20 @@ export const SNIPPETS: Snippet[] = [
     text: asciiDiagram`
       "clk/rst" ----->+---------------------------- "Serial" ---------------------------+
       "cfg bus" ----->| +-------------+   +----------------+   +----------------+       |
-      "rx_i" -------->| | "cfg regs"  |   | "TX/RX path"   |   | "irq/status"   +------> "irq"
+      "rx_i" -------->| | "cfg regs"  |   | "TX/RX path"   |   | "irq/status"   +-------+----> "irq"
                       | +------+------+   +-------+--------+   +----------------+       |
                       |        |                  |                                     |
                       |        v                  v                                     |
-                      | "control/status"    "timing/buf" -----------------------------> "tx_o"
+                      | "control/status"    "timing/buf" -------------------------------+----> "tx_o"
                       +-----------------------------------------------------------------+
-    `,
-  },
-  {
-    label: "ctrl core",
-    title: "Generic controller core island",
-    text: asciiDiagram`
-      +------------------------- "Control Core" -------------------------+
-      |                                                                 |
-      | +----------+    +----------+    +----------+    +-------------+ |
-      | | "CPU"    +--->| "bus mtx"+--->| "fabric" +--->| "io block"  | |
-      | +----+-----+    +----+-----+    +----+-----+    +------+------+ |
-      |      |               |               |                 |        |
-      |      v               v               v                 v        |
-      | +----------+    +----------+    +----------+      +----------+  |
-      | | "ROM"    |    | "RAM"    |    | "DMA"    |      | "serial" | |
-      | +----------+    +----------+    +----------+      +----------+  |
-      +-----------------------------------------------------------------+
     `,
   },
   {
     label: "data path",
     title: "Streaming input-process-output data path",
     text: asciiDiagram`
-      "input" --->+-------------+     +-------------+     +-------------+---> "output"
-                  | "in FIFO"   +---->| "process"   +---->| "out FIFO"  |
+                  +-------------+     +-------------+     +-------------+
+      "input" --->| "in FIFO"   +---->| "process"   +---->| "out FIFO"  |---> "output"
                   +------+------+     +------+------+     +------+------+
                          |                   |                   |
                          v                   v                   v
