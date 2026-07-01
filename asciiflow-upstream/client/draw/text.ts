@@ -25,7 +25,11 @@ export class DrawText extends AbstractDrawFunction {
       return;
     }
     const patch =
-      buildAutoFitTextPatch(store.currentCanvas.committed, this.textLayer) ??
+      buildAutoFitTextPatch(
+        store.currentCanvas.committed,
+        this.textLayer,
+        store.textQuoteMode ? "all" : "none"
+      ) ??
       this.textLayer;
     store.currentCanvas.setScratchLayer(patch);
     store.currentCanvas.commitScratch();

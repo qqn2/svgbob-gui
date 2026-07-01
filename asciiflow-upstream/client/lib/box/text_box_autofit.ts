@@ -17,6 +17,8 @@ interface BoxStyle {
   bottomRight: string;
 }
 
+export type TextQuoteMode = "inside-box" | "all" | "none";
+
 function boxStyle(committed: ILayerView, box: DetectedBox): BoxStyle {
   const topRight = committed.get(new Vector(box.right, box.top));
   const bottomRight = committed.get(new Vector(box.right, box.bottom));
@@ -130,7 +132,8 @@ function writeText(patch: Layer, row: TextRow, text: string) {
 
 export function buildAutoFitTextPatch(
   committed: ILayerView,
-  textLayer: Layer
+  textLayer: Layer,
+  quoteMode: TextQuoteMode = "inside-box"
 ): Layer | null {
   const rows = textRows(textLayer);
   if (rows.length === 0) {
@@ -142,13 +145,14 @@ export function buildAutoFitTextPatch(
 
   for (const row of rows) {
     const box = findBoxAt(committed, new Vector(row.left, row.y));
+    const shouldQuote = quoteMode === "all" || quoteMode === "inside-box";
     if (!box || row.y <= box.top || row.y >= box.bottom) {
-      writeText(patch, row, row.text);
+      writeText(patch, row, quoteMode === "all" ? quoteSvgbobText(row.text) : row.text);
       changed = true;
       continue;
     }
 
-    const text = quoteSvgbobText(row.text);
+    const text = shouldQuote ? quoteSvgbobText(row.text) : row.text.trimEnd();
     const requiredRight = row.left + text.length;
     drawExpandedRightEdge(patch, committed, box, requiredRight);
     writeText(patch, row, text);

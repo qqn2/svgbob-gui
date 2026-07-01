@@ -95,6 +95,7 @@ export class DrawPlaceBlock extends AbstractDrawFunction {
     this.previewAt(cursor);
     if (this._overlaps) return;
     store.currentCanvas.commitScratch();
+    this.cancel();
   }
 
   cancel(): void {

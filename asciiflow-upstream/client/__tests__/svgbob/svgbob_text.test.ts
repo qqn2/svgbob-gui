@@ -55,4 +55,17 @@ describe("svgbob_text", () => {
       { top: 0, left: 0, bottom: 3, right: 19, tagId: "#ff8800" },
     ]);
   });
+
+  it("collects fill tags placed on a neighboring row inside small boxes", () => {
+    const ascii = [
+      "+---------+",
+      "| {c6}    |",
+      "| STAGE 1 |",
+      "+---------+",
+    ].join("\n");
+
+    expect(collectFilledBoxes(ascii)).toEqual([
+      { top: 0, left: 0, bottom: 3, right: 10, tagId: "c6" },
+    ]);
+  });
 });

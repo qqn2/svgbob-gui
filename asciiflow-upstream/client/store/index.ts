@@ -42,6 +42,18 @@ export interface IModifierKeys {
   meta?: boolean;
 }
 
+export interface FillStatus {
+  message: string;
+  tone: "muted" | "ok" | "warn";
+  box?: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  };
+  overflowCount?: number;
+}
+
 export interface IDrawing {
   id: string;
   name: string;
@@ -156,6 +168,11 @@ export interface AppState {
   showGrid: boolean;
   /** Active svgbob fill tag (preset id or #rrggbb), or null to clear fill on click. */
   selectedFillTag: string | null;
+  /** When true, fill writes {tag} at the cursor if no box is detected. */
+  fillForceMode: boolean;
+  fillStatus: FillStatus | null;
+  /** When true, committed text-tool runs are wrapped in quotes for svgbob text labels. */
+  textQuoteMode: boolean;
 
   // Bumped whenever a CanvasStore mutates, so React can re-render.
   canvasVersion: number;
@@ -189,6 +206,9 @@ function initialState(): AppState {
     renderState: "pending",
     showGrid: readPersistent("showGrid", true),
     selectedFillTag: readPersistent<string | null>("selectedFillTag", "c1"),
+    fillForceMode: readPersistent("fillForceMode", true),
+    fillStatus: null,
+    textQuoteMode: readPersistent("textQuoteMode", true),
     canvasVersion: 0,
   };
 }
@@ -332,6 +352,31 @@ export const store = {
   },
   setSelectedFillTag(value: string | null) {
     setPersistent("selectedFillTag", value);
+  },
+
+  get fillForceMode() {
+    return useAppStore.getState().fillForceMode;
+  },
+  setFillForceMode(value: boolean) {
+    setPersistent("fillForceMode", value);
+  },
+
+  get fillStatus() {
+    return useAppStore.getState().fillStatus;
+  },
+  setFillStatus(value: FillStatus | null) {
+    const current = useAppStore.getState().fillStatus;
+    if (JSON.stringify(current) === JSON.stringify(value)) {
+      return;
+    }
+    useAppStore.setState({ fillStatus: value });
+  },
+
+  get textQuoteMode() {
+    return useAppStore.getState().textQuoteMode;
+  },
+  setTextQuoteMode(value: boolean) {
+    setPersistent("textQuoteMode", value);
   },
 
   // Alt pressed

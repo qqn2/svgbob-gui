@@ -147,6 +147,30 @@ function findExternalFilledBoxAt(
   return { top, left, bottom, right };
 }
 
+function findFilledBoxNearTag(
+  lines: string[],
+  tagLeft: number,
+  tagRight: number,
+  y: number
+): Omit<FilledBox, "tagId"> | null {
+  const xs = [
+    tagLeft,
+    Math.floor((tagLeft + tagRight) / 2),
+    tagRight,
+  ].filter((x, index, values) => values.indexOf(x) === index);
+
+  for (const dy of [0, 1, -1, 2, -2]) {
+    for (const x of xs) {
+      const box = findFilledBoxAt(lines, x, y + dy);
+      if (box) {
+        return box;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function stripFillTags(ascii: string): string {
   return ascii.replace(FILL_TAG_PATTERN, (tag) => " ".repeat(tag.length));
 }
@@ -161,7 +185,12 @@ export function collectFilledBoxes(ascii: string): FilledBox[] {
     while ((match = re.exec(line)) !== null) {
       const tagId = match[0].slice(1, -1);
       const box =
-        findFilledBoxAt(lines, match.index, y) ??
+        findFilledBoxNearTag(
+          lines,
+          match.index,
+          match.index + match[0].length - 1,
+          y
+        ) ??
         findExternalFilledBoxAt(lines, match.index, y);
       if (!box || !fillStyleForTag(tagId)) continue;
       boxes.set(

@@ -9,6 +9,7 @@ import { Vector } from "#asciiflow/client/vector";
 
 export class DrawMove extends AbstractDrawFunction {
   private trace: ILineTrace;
+  private startPosition: Vector;
 
   start(position: Vector) {
     const value = store.currentCanvas.committed.get(position);
@@ -20,11 +21,16 @@ export class DrawMove extends AbstractDrawFunction {
     }
 
     this.trace = traceLine(store.currentCanvas.committed, position);
+    this.startPosition = position;
     this.move(position);
   }
 
   move(position: Vector) {
     if (this.trace == null) {
+      return;
+    }
+    if (this.shouldRepairGap(position)) {
+      this.moveRepairGap(position);
       return;
     }
     const layer = new Layer();
@@ -106,8 +112,36 @@ export class DrawMove extends AbstractDrawFunction {
     store.currentCanvas.setScratchLayer(layer);
   }
 
+  moveRepairGap(position: Vector) {
+    const layer = new Layer();
+    if (this.trace.orientation === "horizontal") {
+      const minX = Math.min(this.startPosition.x, position.x);
+      const maxX = Math.max(this.startPosition.x, position.x);
+      for (let x = minX; x <= maxX; x++) {
+        this.setRepairCell(
+          layer,
+          new Vector(x, this.startPosition.y),
+          constants.UNICODE.lineHorizontal
+        );
+      }
+    } else {
+      const minY = Math.min(this.startPosition.y, position.y);
+      const maxY = Math.max(this.startPosition.y, position.y);
+      for (let y = minY; y <= maxY; y++) {
+        this.setRepairCell(
+          layer,
+          new Vector(this.startPosition.x, y),
+          constants.UNICODE.lineVertical
+        );
+      }
+    }
+    store.currentCanvas.setScratchLayer(layer);
+  }
+
   end() {
     store.currentCanvas.commitScratch();
+    this.trace = null;
+    this.startPosition = null;
   }
 
   getCursor(position: Vector) {
@@ -126,6 +160,23 @@ export class DrawMove extends AbstractDrawFunction {
   }
 
   handleKey(value: string) {}
+
+  private shouldRepairGap(position: Vector) {
+    if (!this.trace || !this.startPosition) return false;
+    const delta = position.subtract(this.startPosition);
+    if (this.trace.orientation === "horizontal") {
+      return Math.abs(delta.x) > Math.abs(delta.y) && delta.x !== 0;
+    }
+    return Math.abs(delta.y) > Math.abs(delta.x) && delta.y !== 0;
+  }
+
+  private setRepairCell(layer: Layer, position: Vector, value: string) {
+    const existing = store.currentCanvas.committed.get(position);
+    if (existing != null && existing !== value) {
+      return;
+    }
+    layer.set(position, value);
+  }
 }
 
 interface ILineAttachmentTrace {

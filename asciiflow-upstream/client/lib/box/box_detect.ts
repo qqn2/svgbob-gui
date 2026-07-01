@@ -1,4 +1,5 @@
 import { FILL_TAG_PATTERN } from "#asciiflow/client/lib/svgbob/fill_palette";
+import { ASCII, UNICODE } from "#asciiflow/client/constants";
 import { ILayerView, Layer } from "#asciiflow/client/layer";
 import { Vector } from "#asciiflow/client/vector";
 
@@ -12,12 +13,26 @@ export interface DetectedBox {
 const SCAN_LIMIT = 400;
 const FILL_TAG_SLOT_WIDTH = 16;
 
+interface BoxStyle {
+  horizontal: string;
+  vertical: string;
+  topRight: string;
+  bottomRight: string;
+}
+
 function cell(layer: ILayerView, x: number, y: number): string | null {
   return layer.get(new Vector(x, y));
 }
 
 function isVerticalWall(c: string | null): boolean {
-  return c === "|" || c === "│";
+  return (
+    c === ASCII.lineVertical ||
+    c === ASCII.junctionLeft ||
+    c === UNICODE.lineVertical ||
+    c === UNICODE.junctionLeft ||
+    c === UNICODE.junctionRight ||
+    c === UNICODE.junctionAll
+  );
 }
 
 function isHorizontalWall(c: string | null): boolean {
@@ -40,6 +55,25 @@ function isCorner(c: string | null): boolean {
     c === "└" ||
     c === "┘"
   );
+}
+
+function boxStyle(layer: ILayerView, box: DetectedBox): BoxStyle {
+  const topRight = cell(layer, box.right, box.top);
+  const bottomRight = cell(layer, box.right, box.bottom);
+  const isAscii = topRight === "+" || bottomRight === "+";
+  return isAscii
+    ? {
+        horizontal: ASCII.lineHorizontal,
+        vertical: ASCII.lineVertical,
+        topRight: ASCII.cornerTopRight,
+        bottomRight: ASCII.cornerBottomRight,
+      }
+    : {
+        horizontal: UNICODE.lineHorizontal,
+        vertical: UNICODE.lineVertical,
+        topRight: UNICODE.cornerTopRight,
+        bottomRight: UNICODE.cornerBottomRight,
+      };
 }
 
 function isHorizontalBorderRow(
@@ -197,44 +231,16 @@ function tagText(tagId: string): string {
   return `{${tagId}}`;
 }
 
-function applyTagToInterior(
-  text: string,
-  tagId: string | null,
-  width: number
-): { text: string; placed: boolean } {
+function applyTagToInterior(text: string, tagId: string | null): string {
   const base = stripFillTags(text);
   if (!tagId) {
-    return { text: base, placed: false };
+    return base;
   }
   const tag = tagText(tagId);
   if (!base.trim()) {
-    return tag.length <= width
-      ? { text: tag, placed: true }
-      : { text: base, placed: false };
+    return tag;
   }
-  const tagged = `${base} ${tag}`;
-  if (tagged.length <= width) {
-    return { text: tagged, placed: true };
-  }
-  return { text: base, placed: false };
-}
-
-function outsideTagRows(box: DetectedBox, preferredRow: number): number[] {
-  return [
-    preferredRow,
-    ...Array.from({ length: box.bottom - box.top + 1 }, (_, i) => box.top + i),
-  ].filter((row, index, rows) => rows.indexOf(row) === index);
-}
-
-function canPlaceOutsideTag(
-  layer: ILayerView,
-  box: DetectedBox,
-  y: number,
-  tag: string
-): boolean {
-  const existing = rowTextRange(layer, y, box.right + 1, tag.length);
-  const withoutTags = existing.replace(FILL_TAG_PATTERN, "");
-  return withoutTags.trim() === "";
+  return `${base} ${tag}`;
 }
 
 function writeRangePatch(
@@ -270,6 +276,100 @@ function clearOutsideFillTags(
   }
 }
 
+function clearInteriorFillTags(
+  patch: Layer,
+  layer: ILayerView,
+  box: DetectedBox,
+  keepRow: number
+) {
+  const width = box.right - box.left - 1;
+  for (let y = box.top + 1; y < box.bottom; y++) {
+    if (y === keepRow) {
+      continue;
+    }
+    const current = rowTextRange(layer, y, box.left + 1, width);
+    const next = current.replace(FILL_TAG_PATTERN, (tag) => " ".repeat(tag.length));
+    writeRangePatch(patch, layer, y, box.left + 1, width, next);
+  }
+}
+
+function drawExpandedRightEdge(
+  patch: Layer,
+  layer: ILayerView,
+  box: DetectedBox,
+  labelRow: number,
+  nextRight: number
+) {
+  if (nextRight <= box.right) {
+    return;
+  }
+
+  const style = boxStyle(layer, box);
+
+  for (let y = box.top; y <= box.bottom; y++) {
+    patch.set(new Vector(box.right, y), " ");
+  }
+
+  for (let x = box.right; x <= nextRight; x++) {
+    patch.set(new Vector(x, box.top), style.horizontal);
+    patch.set(new Vector(x, box.bottom), style.horizontal);
+  }
+
+  for (let y = box.top; y <= box.bottom; y++) {
+    patch.set(new Vector(nextRight, y), style.vertical);
+  }
+
+  patch.set(new Vector(nextRight, box.top), style.topRight);
+  patch.set(new Vector(nextRight, box.bottom), style.bottomRight);
+  redrawRightConnector(patch, layer, box, labelRow, nextRight, style);
+}
+
+function isRightConnector(value: string | null): boolean {
+  return (
+    value === "-" ||
+    value === ">" ||
+    value === UNICODE.lineHorizontal ||
+    value === UNICODE.arrowRight
+  );
+}
+
+function redrawRightConnector(
+  patch: Layer,
+  layer: ILayerView,
+  box: DetectedBox,
+  y: number,
+  nextRight: number,
+  style: BoxStyle
+) {
+  const start = box.right + 1;
+  let end = start - 1;
+  let hasArrowHead = false;
+
+  for (let x = start; isRightConnector(cell(layer, x, y)); x++) {
+    const value = cell(layer, x, y);
+    end = x;
+    hasArrowHead = hasArrowHead || value === ">" || value === UNICODE.arrowRight;
+  }
+
+  if (end < start) {
+    return;
+  }
+
+  for (let x = Math.max(start, nextRight + 1); x <= end; x++) {
+    patch.set(new Vector(x, y), " ");
+  }
+
+  const nextStart = nextRight + 1;
+  const nextEnd = Math.max(end, nextStart);
+  for (let x = nextStart; x <= nextEnd; x++) {
+    const isLast = x === nextEnd;
+    patch.set(
+      new Vector(x, y),
+      isLast && hasArrowHead ? UNICODE.arrowRight : style.horizontal
+    );
+  }
+}
+
 /** Layer patch updating one interior row with a fill tag (or clearing it). */
 export function buildFillPatch(
   layer: ILayerView,
@@ -279,16 +379,20 @@ export function buildFillPatch(
 ): Layer {
   const patch = new Layer();
   const width = box.right - box.left - 1;
-  const interiorResult = applyTagToInterior(
-    rowText(layer, box, labelRow),
-    tagId,
-    width
-  );
-  const interior = interiorResult.text;
+  const interior = applyTagToInterior(rowText(layer, box, labelRow), tagId);
 
   clearOutsideFillTags(patch, layer, box);
+  clearInteriorFillTags(patch, layer, box, labelRow);
+  drawExpandedRightEdge(
+    patch,
+    layer,
+    box,
+    labelRow,
+    box.left + interior.length + 1
+  );
 
-  for (let i = 0; i < width; i++) {
+  const nextWidth = Math.max(width, interior.length);
+  for (let i = 0; i < nextWidth; i++) {
     const x = box.left + 1 + i;
     const pos = new Vector(x, labelRow);
     const nextChar = i < interior.length ? interior[i] : " ";
@@ -308,16 +412,6 @@ export function buildFillPatch(
       if (prev != null && prev !== " ") {
         patch.set(pos, " ");
       }
-    }
-  }
-
-  if (tagId && !interiorResult.placed) {
-    const tag = tagText(tagId);
-    const outsideRow = outsideTagRows(box, labelRow).find((row) =>
-      canPlaceOutsideTag(layer, box, row, tag)
-    );
-    if (outsideRow !== undefined) {
-      writeRangePatch(patch, layer, outsideRow, box.right + 1, tag.length, tag);
     }
   }
 
