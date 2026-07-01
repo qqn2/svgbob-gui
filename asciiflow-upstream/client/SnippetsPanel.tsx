@@ -3,18 +3,74 @@ import {
   Snippet,
   SnippetParams,
   beginBlockPlacement,
+  resolveSnippetText,
 } from "#asciiflow/client/lib/snippets/snippets";
 import { store } from "#asciiflow/client/store";
 import styles from "#asciiflow/client/lib/snippets/snippets.module.css";
 import { TextField } from "#asciiflow/client/ui/components";
 import * as React from "react";
 
-const SNIPPET_GROUPS = [
-  { label: "basic", items: ["box", "arrow", "arr lbl", "down", "pipeline"] },
-  { label: "logic", items: ["reg/FF", "mux", "adder", "ICG", "rst sync"] },
-  { label: "memory", items: ["SRAM", "FIFO", "CSR"] },
-  { label: "interfaces", items: ["bus", "APB", "CDC", "scan", "IRQ"] },
+export const SNIPPET_GROUPS = [
+  { label: "General", items: ["process", "terminator", "decision", "io shape", "database", "document", "actor", "cloud", "table"] },
+  { label: "Flowchart", items: ["swimlane", "sequence", "state tree", "plot axes", "arrow", "arr lbl", "down"] },
+  { label: "RTL Basics", items: ["box", "pipeline", "bus", "fanout"] },
+  { label: "Logic", items: ["reg/FF", "mux", "adder", "ICG", "rst sync"] },
+  { label: "System", items: ["chip shell", "ctrl core", "io cluster", "data path", "fanout"] },
+  { label: "Clock / Reset", items: ["clk tree", "rst tree", "CDC", "scan"] },
+  { label: "Memory / Registers", items: ["SRAM", "FIFO", "CSR", "mem map", "reg access"] },
+  { label: "Security", items: ["guard path", "auth flow", "cert chain"] },
+  { label: "Interfaces", items: ["bus", "APB", "IRQ", "pad mux", "iface ss", "storage ss", "serial blk"] },
 ];
+
+export const SNIPPET_DISPLAY_LABELS: Record<string, string> = {
+  process: "Process",
+  terminator: "Start / End",
+  decision: "Decision",
+  "io shape": "Input / Output",
+  database: "Database",
+  document: "Document",
+  actor: "Actor",
+  cloud: "Cloud",
+  table: "Table",
+  swimlane: "Swimlane",
+  sequence: "Sequence",
+  "state tree": "State tree",
+  "plot axes": "Plot axes",
+  box: "Box",
+  arrow: "Arrow",
+  "arr lbl": "Labeled arrow",
+  down: "Down arrow",
+  pipeline: "Pipeline",
+  "reg/FF": "Register / FF",
+  mux: "Mux",
+  adder: "Adder",
+  ICG: "Clock gate",
+  "rst sync": "Reset sync",
+  "chip shell": "Chip shell",
+  "ctrl core": "Control core",
+  "io cluster": "IO cluster",
+  "data path": "Data path",
+  fanout: "Fanout",
+  "clk tree": "Clock tree",
+  "rst tree": "Reset tree",
+  CDC: "CDC boundary",
+  scan: "Scan mux",
+  SRAM: "SRAM",
+  FIFO: "FIFO",
+  CSR: "CSR block",
+  "mem map": "Memory map",
+  "reg access": "Register access",
+  "guard path": "Guard path",
+  "auth flow": "Auth flow",
+  "cert chain": "Certificate chain",
+  bus: "Bus",
+  APB: "APB slave",
+  IRQ: "IRQ tree",
+  "pad mux": "Pad mux",
+  "iface ss": "Interface subsystem",
+  "storage ss": "Storage subsystem",
+  "serial blk": "Serial block",
+};
 
 function ParamDialog({
   snippet,
@@ -110,11 +166,77 @@ function ParamDialog({
   );
 }
 
+function displayName(snippet: Snippet): string {
+  return SNIPPET_DISPLAY_LABELS[snippet.label] ?? snippet.label;
+}
+
+function normalizedPreviewLines(source: string): string[] {
+  const lines = source
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+$/g, ""));
+  while (lines.length > 0 && lines[0].trim() === "") {
+    lines.shift();
+  }
+  while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
+    lines.pop();
+  }
+
+  const nonEmptyLines = lines.filter((line) => line.trim() !== "");
+  const commonIndent = nonEmptyLines.length
+    ? Math.min(...nonEmptyLines.map((line) => line.match(/^\s*/)?.[0].length ?? 0))
+    : 0;
+  return lines.map((line) => line.slice(commonIndent));
+}
+
+export function previewText(snippet: Snippet): string {
+  const normalizedLines = normalizedPreviewLines(
+    snippet.preview ?? resolveSnippetText(snippet)
+  );
+  const maxPreviewLines = 10;
+  return normalizedLines.slice(0, maxPreviewLines).join("\n");
+  const source = (snippet.preview ?? resolveSnippetText(snippet))
+    .replace(/\r\n?/g, "\n")
+    .trim();
+  const lines = source.split("\n");
+  const maxLines = 10;
+  return lines.slice(0, maxLines).join("\n");
+/*
+  return lines
+    .slice(0, maxLines)
+    .map((line) => (line.length > maxColumns ? `${line.slice(0, maxColumns - 1)}…` : line))
+    .join("\n");
+*/
+}
+
+function previewTextClassName(preview: string): string {
+  const lines = preview.split("\n");
+  const maxColumns = Math.max(...lines.map((line) => line.length));
+  if (lines.length > 8 || maxColumns > 46) {
+    return styles.snippetPreviewTextDense;
+  }
+  if (lines.length > 6 || maxColumns > 34) {
+    return styles.snippetPreviewTextCompact;
+  }
+  return "";
+}
+
+function snippetMatches(snippet: Snippet, query: string): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) {
+    return true;
+  }
+  return `${displayName(snippet)} ${snippet.title} ${snippet.label}`
+    .toLowerCase()
+    .includes(needle);
+}
+
 export function SnippetsPanel() {
   const [pending, setPending] = React.useState<Snippet | null>(null);
   const [activeSnippet, setActiveSnippet] = React.useState<Snippet | null>(null);
   const [activeParams, setActiveParams] = React.useState<SnippetParams | undefined>(undefined);
   const [scale, setScale] = React.useState(1);
+  const [query, setQuery] = React.useState("");
 
   const handleClick = (snippet: Snippet) => {
     setActiveSnippet(snippet);
@@ -136,30 +258,49 @@ export function SnippetsPanel() {
   };
 
   const snippetsByLabel = new Map(SNIPPETS.map((snippet) => [snippet.label, snippet]));
+  const visibleGroups = SNIPPET_GROUPS.map((group) => ({
+    ...group,
+    snippets: group.items
+      .map((label) => snippetsByLabel.get(label))
+      .filter((snippet): snippet is Snippet => Boolean(snippet))
+      .filter((snippet) => snippetMatches(snippet, query)),
+  })).filter((group) => group.snippets.length > 0);
 
   return (
     <div className={styles.panel}>
-      <span className={styles.label}>RTL blocks</span>
-      <span className={styles.hint}>
-        click to place · R rotate · H/V flip · Esc cancels
-      </span>
-      <span className={styles.scaleGroup} aria-label="block scale">
-        <span className={styles.scaleLabel}>scale</span>
-        {[1, 2, 3].map((value) => (
-          <button
-            key={value}
-            type="button"
-            className={[
-              styles.snippetBtn,
-              scale === value ? styles.snippetBtnActive : "",
-            ].filter(Boolean).join(" ")}
-            onClick={() => handleScale(value)}
-            title={`Place blocks at ${value}x scale`}
-          >
-            {value}x
-          </button>
-        ))}
-      </span>
+      <div className={styles.panelHeader}>
+        <div className={styles.titleBlock}>
+          <span className={styles.label}>Blocks</span>
+          <span className={styles.hint}>Preview and place reusable schematic shapes</span>
+        </div>
+        <input
+          className={styles.searchInput}
+          value={query}
+          placeholder="Search blocks"
+          aria-label="Search blocks"
+          spellCheck={false}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => event.stopPropagation()}
+          onKeyPress={(event) => event.stopPropagation()}
+        />
+        <div className={styles.scaleGroup} aria-label="block scale">
+          <span className={styles.scaleLabel}>Scale</span>
+          {[1, 2, 3].map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={[
+                styles.scaleBtn,
+                scale === value ? styles.scaleBtnActive : "",
+              ].filter(Boolean).join(" ")}
+              onClick={() => handleScale(value)}
+              title={`Place blocks at ${value}x scale`}
+            >
+              {value}x
+            </button>
+          ))}
+        </div>
+      </div>
       {pending && (
         <ParamDialog
           snippet={pending}
@@ -176,24 +317,39 @@ export function SnippetsPanel() {
         />
       )}
       <div className={styles.snippetGroups}>
-        {SNIPPET_GROUPS.map((group) => (
+        {visibleGroups.map((group) => (
           <div className={styles.snippetGroup} key={group.label}>
             <span className={styles.groupLabel}>{group.label}</span>
-            {group.items.map((label) => {
-              const snippet = snippetsByLabel.get(label);
-              if (!snippet) return null;
-              return (
-                <button
-                  key={snippet.label}
-                  type="button"
-                  className={styles.snippetBtn}
-                  title={snippet.title}
-                  onClick={() => handleClick(snippet)}
-                >
-                  {snippet.label}
-                </button>
-              );
-            })}
+            <div className={styles.snippetGrid}>
+              {group.snippets.map((snippet) => {
+                const active = activeSnippet?.label === snippet.label;
+                const preview = previewText(snippet);
+                return (
+                  <button
+                    key={snippet.label}
+                    type="button"
+                    className={[
+                      styles.snippetCard,
+                      active ? styles.snippetCardActive : "",
+                    ].filter(Boolean).join(" ")}
+                    title={snippet.title}
+                    onClick={() => handleClick(snippet)}
+                  >
+                    <div className={styles.snippetPreview} aria-hidden="true">
+                      <pre
+                        className={[
+                          styles.snippetPreviewText,
+                          previewTextClassName(preview),
+                        ].filter(Boolean).join(" ")}
+                      >
+                        {preview}
+                      </pre>
+                    </div>
+                    <span className={styles.snippetName}>{displayName(snippet)}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>

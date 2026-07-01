@@ -322,6 +322,20 @@
   white-space: nowrap;
 }
 
+.fillStatus {
+  color: var(--color-text-muted);
+  font-size: calc(11px * var(--ui-font-scale, 1));
+  white-space: nowrap;
+}
+
+.fillStatusOk {
+  color: var(--color-success);
+}
+
+.fillStatusWarn {
+  color: var(--color-warning);
+}
+
 .fillSwatches {
   display: flex;
   align-items: center;
@@ -382,6 +396,29 @@
 .fillRgbValue {
   color: var(--color-text-muted);
   font-size: calc(11px * var(--ui-font-scale, 1));
+  white-space: nowrap;
+}
+
+/* --- Text panel (in second row) --- */
+
+.textPanel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.textHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size);
+}
+
+.textPreview {
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size);
   white-space: nowrap;
 }
 

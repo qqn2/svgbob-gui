@@ -5,9 +5,10 @@ import {
   Controller,
   InputController,
 } from "#asciiflow/client/controller";
-import { Toolbar } from "#asciiflow/client/toolbar";
+import { Toolbar, usePanel } from "#asciiflow/client/toolbar";
 import { StatusBar } from "#asciiflow/client/StatusBar";
 import { Workspace } from "#asciiflow/client/Workspace";
+import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import {
   loadFromBobRoute,
   seedDefaultDiagramIfEmpty,
@@ -36,6 +37,7 @@ export interface IRouteProps {
 export const App = () => {
   const routeProps = useParams<IRouteProps>();
   const themeMode = useAppStore((s) => s.themeMode);
+  const [panel] = usePanel();
 
   // Sync route params into the store.
   React.useEffect(() => {
@@ -57,7 +59,14 @@ export const App = () => {
   return (
     <div className={styles.app} data-theme={themeMode}>
       <Toolbar />
-      <Workspace {...inputController.getHandlerProps()} />
+      <div className={styles.workbench}>
+        {panel === "snippets" && (
+          <aside className={styles.blocksSidebar} aria-label="Blocks library">
+            <SnippetsPanel />
+          </aside>
+        )}
+        <Workspace {...inputController.getHandlerProps()} />
+      </div>
       <StatusBar />
     </div>
   );

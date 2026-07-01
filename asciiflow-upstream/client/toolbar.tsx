@@ -5,7 +5,6 @@ import {
   normalizeCustomFillTag,
   swatchById,
 } from "#asciiflow/client/lib/svgbob/fill_palette";
-import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
 import { layerToText } from "#asciiflow/client/text_utils";
 import { ThemeMode } from "#asciiflow/client/theme_settings";
@@ -26,12 +25,12 @@ import { useHistory } from "react-router";
 // Which panel owns the second row (singleton — only one at a time)
 // ---------------------------------------------------------------------------
 
-type PanelId = "file" | "export" | "snippets" | "help" | "view" | null;
+export type PanelId = "file" | "export" | "snippets" | "help" | "view" | null;
 
 // Module-level panel state so it survives React Router remounts.
 let _currentPanel: PanelId = null;
 const _panelListeners = new Set<(p: PanelId) => void>();
-function usePanel(): [PanelId, (id: PanelId) => void] {
+export function usePanel(): [PanelId, (id: PanelId) => void] {
   const [panel, _setPanel] = useState<PanelId>(_currentPanel);
   useEffect(() => {
     const listener = (p: PanelId) => _setPanel(p);
@@ -95,7 +94,11 @@ export function Toolbar() {
   const showFillPicker =
     !isShared && selectedToolMode === ToolMode.FILL && panel === null;
 
-  const showSecondRow = panel !== null || showFreeformPicker || showFillPicker;
+  const showTextPanel =
+    !isShared && selectedToolMode === ToolMode.TEXT && panel === null;
+
+  const showTopPanel = panel !== null && panel !== "snippets";
+  const showSecondRow = showTopPanel || showFreeformPicker || showFillPicker || showTextPanel;
 
   return (
     <div className={styles.topBarWrapper}>
@@ -206,11 +209,11 @@ export function Toolbar() {
         <div className={styles.secondRow}>
           {panel === "file" && <FilePanel />}
           {panel === "help" && <HelpContent />}
-          {panel === "snippets" && <SnippetsPanel />}
           {panel === "export" && <ExportPanel drawingId={route} />}
           {panel === "view" && <ViewPanel />}
           {showFreeformPicker && <DrawPanel />}
           {showFillPicker && <FillPanel />}
+          {showTextPanel && <TextPanel />}
         </div>
       )}
     </div>
@@ -397,6 +400,8 @@ const CHAR_GROUPS: Array<{ label: string; keys: string[] }> = [
 
 function FillPanel() {
   const selectedFillTag = useAppStore((s) => s.selectedFillTag);
+  const fillForceMode = useAppStore((s) => s.fillForceMode);
+  const fillStatus = useAppStore((s) => s.fillStatus);
   const selectedSwatch = selectedFillTag ? swatchById(selectedFillTag) : null;
   const activeCustomColor =
     selectedFillTag && !selectedSwatch
@@ -420,7 +425,29 @@ function FillPanel() {
 
   return (
     <div className={styles.fillPanel}>
-      <span className={styles.fillHint}>click inside a box to apply fill</span>
+      <span className={styles.fillHint}>click box or force-place tag</span>
+      <div className={styles.fillSection}>
+        <span className={styles.fillLabel}>force</span>
+        <ActionBtn
+          color={fillForceMode ? "var(--color-danger)" : "var(--color-text-muted)"}
+          onClick={() => store.setFillForceMode(!fillForceMode)}
+          title={fillForceMode ? "No-box clicks write the fill tag" : "No-box clicks do nothing"}
+        >
+          {fillForceMode ? "on" : "off"}
+        </ActionBtn>
+      </div>
+      <span
+        className={[
+          styles.fillStatus,
+          fillStatus?.tone === "ok" ? styles.fillStatusOk : "",
+          fillStatus?.tone === "warn" ? styles.fillStatusWarn : "",
+        ].filter(Boolean).join(" ")}
+      >
+        {fillStatus?.message ?? "move over canvas for fill status"}
+        {fillStatus?.box
+          ? ` (${fillStatus.box.left},${fillStatus.box.top} to ${fillStatus.box.right},${fillStatus.box.bottom})`
+          : ""}
+      </span>
       <div className={styles.fillSection}>
         <span className={styles.fillLabel}>presets</span>
         <div className={styles.fillSwatches} aria-label="preset fill colors">
@@ -482,6 +509,26 @@ function FillPanel() {
         </button>
         <span className={styles.fillLabel}>clear</span>
       </div>
+    </div>
+  );
+}
+
+function TextPanel() {
+  const quoteMode = useAppStore((s) => s.textQuoteMode);
+
+  return (
+    <div className={styles.textPanel}>
+      <span className={styles.textHint}>quotes</span>
+      <ActionBtn
+        color={quoteMode ? "var(--color-warning)" : "var(--color-text-muted)"}
+        onClick={() => store.setTextQuoteMode(!quoteMode)}
+        title={quoteMode ? "Text commits as quoted svgbob labels" : "Text commits raw"}
+      >
+        {quoteMode ? "on" : "off"}
+      </ActionBtn>
+      <span className={styles.textPreview}>
+        {quoteMode ? '"TEXT"' : "TEXT"}
+      </span>
     </div>
   );
 }
@@ -607,15 +654,6 @@ function HelpContent() {
         )}
         <span><Kbd>alt</Kbd></span>
         <span>show tool shortcuts</span>
-      </div>
-      <div className={styles.helpDivider} />
-      <div className={styles.helpSection}>links</div>
-      <div>
-        <a className={styles.helpLink} href="https://github.com/lewish/asciiflow" target="_blank" rel="noopener">github</a>
-        {" \u2502 "}
-        <a className={styles.helpLink} href="https://github.com/lewish/asciiflow/issues/new" target="_blank" rel="noopener">file a bug</a>
-        {" \u2502 "}
-        <a className={styles.helpLink} href="https://asciiflow.com" target="_blank" rel="noopener">asciiflow</a>
       </div>
     </div>
   );
