@@ -63,6 +63,7 @@ const TOOLS: Array<{
   { mode: ToolMode.TEXT, label: "text", testId: "tool-text", shortcut: "6", color: "var(--color-warning)" },
   { mode: ToolMode.FILL, label: "fill", testId: "tool-fill", shortcut: "7", color: "var(--color-danger)" },
   { mode: ToolMode.ERASE, label: "erase", testId: "tool-erase", shortcut: "8", color: "var(--color-danger)" },
+  { mode: ToolMode.RAW, label: "raw", testId: "tool-raw", shortcut: "9", color: "var(--color-accent)" },
 ];
 
 // Helper: stop all keyboard event propagation so controller doesn't intercept
@@ -594,7 +595,7 @@ function DrawPanel() {
 }
 
 // ---------------------------------------------------------------------------
-// Help content (table layout with colored shortcuts and links)
+// Help content
 // ---------------------------------------------------------------------------
 
 function HelpContent() {
@@ -604,57 +605,131 @@ function HelpContent() {
 
   return (
     <div className={styles.helpContent}>
-      <div className={styles.helpExplainer}>
-        Draw ASCII on the left; inspect live SVG on the right. Keep <Kbd>diagram.txt</Kbd> as source and export <Kbd>.svg</Kbd> for docs.
+      <div className={styles.helpHero}>
+        <div>
+          <div className={styles.helpEyebrow}>svgbob workspace</div>
+          <div className={styles.helpTitle}>Draw ASCII, inspect SVG, export clean docs.</div>
+        </div>
+        <div className={styles.helpHeroActions}>
+          <span><Kbd>diagram.txt</Kbd> source</span>
+          <span><Kbd>.svg</Kbd> export</span>
+        </div>
       </div>
-      <div className={styles.helpDivider} />
-      <div className={styles.helpSection}>svgbob + blocks</div>
-      <div className={styles.helpGrid}>
-        <span style={{ color: "var(--color-accent)" }}>preview</span>
-        <span>live SVG from canvas ASCII. Use preview <Kbd>sync</Kbd>, <Kbd>1:1</Kbd>, or <Kbd>fit</Kbd>; copy ASCII or export <Kbd>.svg</Kbd>.</span>
-        <span style={{ color: "var(--color-cyan)" }}>blocks</span>
-        <span>RTL templates with <Kbd>1x</Kbd>, <Kbd>2x</Kbd>, and <Kbd>3x</Kbd> scale. Ghost follows cursor; click to stamp. <Kbd>R</Kbd> rotate, <Kbd>H</Kbd>/<Kbd>V</Kbd> flip, <Kbd>esc</Kbd> cancel.</span>
+
+      <div className={styles.helpColumns}>
+        <section className={styles.helpPanel}>
+          <div className={styles.helpPanelHeader}>
+            <span className={styles.helpSection}>workspace</span>
+            <span className={styles.helpSectionHint}>preview and block placement</span>
+          </div>
+          <div className={styles.helpCards}>
+            <HelpCard tone="accent" title="preview" detail="Live SVG from the canvas ASCII.">
+              <Kbd>sync</Kbd><Kbd>1:1</Kbd><Kbd>fit</Kbd><Kbd>export .svg</Kbd>
+            </HelpCard>
+            <HelpCard tone="cyan" title="blocks" detail="Searchable schematic templates with placement preview.">
+              <Kbd>1x</Kbd><Kbd>2x</Kbd><Kbd>3x</Kbd><Kbd>R</Kbd><Kbd>H</Kbd><Kbd>V</Kbd><Kbd>esc</Kbd>
+            </HelpCard>
+          </div>
+        </section>
+
+        <section className={styles.helpPanel}>
+          <div className={styles.helpPanelHeader}>
+            <span className={styles.helpSection}>tools</span>
+            <span className={styles.helpSectionHint}>draw and edit cells</span>
+          </div>
+          <div className={styles.helpToolList}>
+            <HelpTool tone="cyan" title="box" detail="Drag corner to corner." />
+            <HelpTool tone="success" title="select" detail="Move, resize, copy, paste, erase, and repair edges.">
+              <Kbd>{cmd}+a</Kbd><Kbd>{cmd}+c</Kbd><Kbd>{cmd}+v</Kbd><Kbd>delete</Kbd><Kbd>shift</Kbd>
+            </HelpTool>
+            <HelpTool tone="orange" title="draw" detail="Freeform drawing; press any key to change character." />
+            <HelpTool tone="purple" title="arrow / line" detail="Drag start to end; shift changes orientation.">
+              <Kbd>shift</Kbd>
+            </HelpTool>
+            <HelpTool tone="warning" title="text" detail="Type labels; quote mode makes svgbob text explicit and boxes expand when needed.">
+              <Kbd>enter</Kbd><Kbd>shift+enter</Kbd>
+            </HelpTool>
+            <HelpTool tone="danger" title="fill" detail="Apply a color tag inside a detected box, or use force mode to place a tag.">
+              <Kbd>alt+7</Kbd>
+            </HelpTool>
+            <HelpTool tone="danger" title="erase" detail="Drag over cells to clear them.">
+              <Kbd>alt+8</Kbd>
+            </HelpTool>
+            <HelpTool tone="accent" title="raw" detail="Edit the canvas like text: arrows move, typing inserts, delete/backspace close gaps.">
+              <Kbd>alt+9</Kbd><Kbd>arrows</Kbd><Kbd>enter</Kbd>
+            </HelpTool>
+          </div>
+        </section>
+
+        <section className={styles.helpPanel}>
+          <div className={styles.helpPanelHeader}>
+            <span className={styles.helpSection}>navigation</span>
+            <span className={styles.helpSectionHint}>move around the canvas</span>
+          </div>
+          <div className={styles.helpShortcutGrid}>
+            <HelpShortcut keys="scroll" detail="pan" />
+            <HelpShortcut keys="shift+scroll" detail="pan horizontally" />
+            <HelpShortcut keys="middle-click" detail="free pan" />
+            <HelpShortcut keys={`${cmd}+scroll`} detail="zoom" />
+            {!isShared && <HelpShortcut keys={`${cmd}+z`} detail="undo" />}
+            {!isShared && <HelpShortcut keys={`${cmd}+shift+z`} detail="redo" />}
+            <HelpShortcut keys="alt" detail="show tool shortcuts" />
+          </div>
+        </section>
       </div>
-      <div className={styles.helpDivider} />
-      <div className={styles.helpSection}>tools</div>
-      <div className={styles.helpGrid}>
-        <span style={{ color: "var(--color-cyan)" }}>box</span>
-        <span>drag corner to corner</span>
-        <span style={{ color: "var(--color-success)" }}>select</span>
-        <span>drag to resize/move. <Kbd>{cmd}+a</Kbd> select all, <Kbd>{cmd}+c</Kbd>/<Kbd>{cmd}+v</Kbd> copy/paste, <Kbd>delete</Kbd> erase, <Kbd>shift</Kbd> force select</span>
-        <span style={{ color: "var(--color-orange)" }}>draw</span>
-        <span>freeform. press any key to change character</span>
-        <span style={{ color: "var(--color-purple)" }}>arrow / line</span>
-        <span>drag start to end. <Kbd>shift</Kbd> changes orientation</span>
-        <span style={{ color: "var(--color-warning)" }}>text</span>
-        <span>click and type. inside boxes, commit auto-quotes svgbob labels and expands the box. <Kbd>enter</Kbd> commit, <Kbd>shift+enter</Kbd> newline</span>
-        <span style={{ color: "var(--color-danger)" }}>fill</span>
-        <span>pick a preset or custom RGB color, then click inside a box. <Kbd>alt+7</Kbd></span>
-        <span style={{ color: "var(--color-danger)" }}>erase</span>
-        <span>drag over cells to clear them. <Kbd>alt+8</Kbd></span>
-      </div>
-      <div className={styles.helpDivider} />
-      <div className={styles.helpSection}>navigation</div>
-      <div className={styles.helpGrid}>
-        <span><Kbd>scroll</Kbd></span>
-        <span>pan</span>
-        <span><Kbd>shift+scroll</Kbd></span>
-        <span>pan horizontally</span>
-        <span><Kbd>middle-click</Kbd></span>
-        <span>free pan</span>
-        <span><Kbd>{cmd}+scroll</Kbd></span>
-        <span>zoom</span>
-        {!isShared && (
-          <>
-            <span><Kbd>{cmd}+z</Kbd></span>
-            <span>undo</span>
-            <span><Kbd>{cmd}+shift+z</Kbd></span>
-            <span>redo</span>
-          </>
-        )}
-        <span><Kbd>alt</Kbd></span>
-        <span>show tool shortcuts</span>
-      </div>
+    </div>
+  );
+}
+
+function HelpCard({
+  tone,
+  title,
+  detail,
+  children,
+}: {
+  tone: "accent" | "cyan" | "success" | "orange" | "purple" | "warning" | "danger";
+  title: string;
+  detail: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <article className={styles.helpCard}>
+      <span className={[styles.helpCardTitle, styles[`helpTone_${tone}`]].join(" ")}>
+        {title}
+      </span>
+      <span className={styles.helpCardDetail}>{detail}</span>
+      {children && <span className={styles.helpChips}>{children}</span>}
+    </article>
+  );
+}
+
+function HelpShortcut({ keys, detail }: { keys: string; detail: string }) {
+  return (
+    <div className={styles.helpShortcut}>
+      <Kbd>{keys}</Kbd>
+      <span>{detail}</span>
+    </div>
+  );
+}
+
+function HelpTool({
+  tone,
+  title,
+  detail,
+  children,
+}: {
+  tone: "accent" | "cyan" | "success" | "orange" | "purple" | "warning" | "danger";
+  title: string;
+  detail: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={styles.helpTool}>
+      <span className={[styles.helpToolName, styles[`helpTone_${tone}`]].join(" ")}>
+        {title}
+      </span>
+      <span className={styles.helpToolDetail}>{detail}</span>
+      {children && <span className={styles.helpToolKeys}>{children}</span>}
     </div>
   );
 }

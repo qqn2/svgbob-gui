@@ -9,11 +9,15 @@ import * as React from "react";
 
 function isInputTarget(event: KeyboardEvent) {
   const t = event.target;
-  return (
-    t instanceof HTMLInputElement ||
-    t instanceof HTMLTextAreaElement ||
-    (t instanceof HTMLElement && t.isContentEditable)
-  );
+  if (!t || typeof t !== "object" || !("tagName" in t)) {
+    return false;
+  }
+  const el = t as HTMLElement;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") {
+    return true;
+  }
+  return el.isContentEditable;
 }
 
 /**
@@ -59,24 +63,6 @@ export class Controller {
     this.dragOrigin = null;
     this.dragOriginCell = null;
     this.lastMoveCell = null;
-  }
-
-  handleKeyPress(event: KeyboardEvent) {
-    // Don't intercept keypresses when an input or textarea is focused.
-    if (isInputTarget(event)) return;
-    if (event.keyCode == 8) {
-      // Disable navigation back action on backspace.
-      event.preventDefault();
-    }
-    if (!event.ctrlKey && !event.metaKey && event.keyCode !== 13) {
-      // Prevent browser default for all printable characters we handle
-      // (e.g. ' and / trigger Firefox Quick Find: #202).
-      event.preventDefault();
-      store.currentTool.handleKey(
-        String.fromCharCode(event.keyCode),
-        getModifierKeys(event)
-      );
-    }
   }
 
   handleKeyDown(event: KeyboardEvent) {
@@ -132,6 +118,9 @@ export class Controller {
         event.preventDefault();
       } else if (event.keyCode === "8".charCodeAt(0)) {
         store.setToolMode(ToolMode.ERASE);
+        event.preventDefault();
+      } else if (event.keyCode === "9".charCodeAt(0)) {
+        store.setToolMode(ToolMode.RAW);
         event.preventDefault();
       }
     }
@@ -204,6 +193,24 @@ export class Controller {
     }
     if (specialKeyCode != null) {
       store.currentTool.handleKey(specialKeyCode, getModifierKeys(event));
+      if (store.selectedToolMode === ToolMode.RAW) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    // Printable characters are handled from keydown only (not keypress) so a
+    // single listener path dispatches each keystroke once.
+    if (
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      !event.isComposing &&
+      event.key.length === 1
+    ) {
+      // Prevent browser default (e.g. ' and / trigger Firefox Quick Find: #202).
+      event.preventDefault();
+      store.currentTool.handleKey(event.key, getModifierKeys(event));
     }
   }
 

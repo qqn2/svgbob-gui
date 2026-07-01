@@ -28,6 +28,37 @@ import { CHAR_PIXELS_H, CHAR_PIXELS_V } from "#asciiflow/client/constants";
 const controller = new Controller();
 const inputController = new InputController(controller);
 
+/** Survives Vite HMR so DOM listeners stay singletons across module reloads. */
+interface AsciiflowHandlerHost {
+  controller: Controller;
+  inputController: InputController;
+  installed: boolean;
+}
+
+type AsciiflowWindow = Window &
+  typeof globalThis & {
+    __asciiflowHandlerHost?: AsciiflowHandlerHost;
+    __asciiflowOnKeyDown?: (e: KeyboardEvent) => void;
+    __asciiflowOnKeyUp?: (e: KeyboardEvent) => void;
+    __asciiflowOnWheel?: (e: WheelEvent) => void;
+    __asciiflowOnCopy?: (e: ClipboardEvent) => void;
+    __asciiflowOnCut?: (e: ClipboardEvent) => void;
+    __asciiflowOnPaste?: (e: ClipboardEvent) => void;
+    __asciiflow__?: Record<string, unknown>;
+  };
+
+function handlerHost(): AsciiflowHandlerHost {
+  const win = window as AsciiflowWindow;
+  if (!win.__asciiflowHandlerHost) {
+    win.__asciiflowHandlerHost = {
+      controller,
+      inputController,
+      installed: false,
+    };
+  }
+  return win.__asciiflowHandlerHost;
+}
+
 export interface IRouteProps {
   local?: string;
   share?: string;
@@ -85,7 +116,7 @@ async function render() {
 }
 
 // Expose a test bridge for e2e tests to query store and render state.
-(window as any).__asciiflow__ = {
+(window as AsciiflowWindow).__asciiflow__ = {
   getCommittedText: () => layerToText(store.currentCanvas.committed),
   getRenderedVersion: () => renderedVersion,
   getToolMode: () => store.toolMode(),
@@ -97,64 +128,103 @@ async function render() {
   getCellSize: () => ({ w: CHAR_PIXELS_H, h: CHAR_PIXELS_V }),
 };
 
+function ensureStableDomHandlers(win: AsciiflowWindow) {
+  if (!win.__asciiflowOnKeyDown) {
+    win.__asciiflowOnKeyDown = (e) =>
+      win.__asciiflowHandlerHost!.controller.handleKeyDown(e);
+    win.__asciiflowOnKeyUp = (e) =>
+      win.__asciiflowHandlerHost!.controller.handleKeyUp(e);
+    win.__asciiflowOnWheel = (e) =>
+      win.__asciiflowHandlerHost!.inputController.handleWheel(e);
+    win.__asciiflowOnCopy = (e) => {
+      if (store.selectTool.selectBox) {
+        e.preventDefault();
+        const copiedText = layerToText(
+          store.currentCanvas.committed,
+          store.selectTool.selectBox
+        );
+        e.clipboardData!.setData("text/plain", copiedText);
+      }
+    };
+    win.__asciiflowOnCut = (e) => {
+      if (store.selectTool.selectBox) {
+        e.preventDefault();
+        const copiedText = layerToText(
+          store.currentCanvas.committed,
+          store.selectTool.selectBox
+        );
+        e.clipboardData!.setData("text/plain", copiedText);
+        store.selectTool.cutSelection();
+      }
+    };
+    win.__asciiflowOnPaste = (e) => {
+      e.preventDefault();
+      const clipboardText = e.clipboardData!.getData("text");
+      const center = canvasCenter();
+      let position = screenToCell(new Vector(center.x, center.y));
+      if (store.selectTool.selectBox) {
+        position = store.selectTool.selectBox.topLeft();
+      }
+      if (store.toolMode() === ToolMode.TEXT && store.textTool.currentPosition) {
+        position = store.textTool.currentPosition;
+      }
+      const pastedLayer = textToLayer(clipboardText, position);
+      store.currentTool.cleanup();
+      store.currentCanvas.setScratchLayer(pastedLayer);
+      store.currentCanvas.commitScratch();
+    };
+  }
+}
+
+function installGlobalHandlers() {
+  const win = window as AsciiflowWindow;
+  const host = handlerHost();
+  host.controller = controller;
+  host.inputController = inputController;
+
+  ensureStableDomHandlers(win);
+
+  if (host.installed) {
+    return;
+  }
+  host.installed = true;
+
+  const root = document.getElementById("root");
+  if (!root) {
+    return;
+  }
+
+  root.addEventListener("keydown", win.__asciiflowOnKeyDown!);
+  root.addEventListener("keyup", win.__asciiflowOnKeyUp!);
+  // Register wheel handler with { passive: false } so preventDefault() can
+  // suppress browser page zoom on Ctrl+scroll / pinch-to-zoom.
+  root.addEventListener("wheel", win.__asciiflowOnWheel!, { passive: false });
+  // Use native copy/cut events so the browser handles clipboard permissions.
+  // This works across Chrome, Safari, and Firefox (including macOS).
+  document.addEventListener("copy", win.__asciiflowOnCopy!);
+  document.addEventListener("cut", win.__asciiflowOnCut!);
+  document.addEventListener("paste", win.__asciiflowOnPaste!);
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      if (!host.installed) {
+        return;
+      }
+      root.removeEventListener("keydown", win.__asciiflowOnKeyDown!);
+      root.removeEventListener("keyup", win.__asciiflowOnKeyUp!);
+      root.removeEventListener("wheel", win.__asciiflowOnWheel!);
+      document.removeEventListener("copy", win.__asciiflowOnCopy!);
+      document.removeEventListener("cut", win.__asciiflowOnCut!);
+      document.removeEventListener("paste", win.__asciiflowOnPaste!);
+      host.installed = false;
+    });
+  }
+}
+
 // tslint:disable-next-line: no-console
 Promise.all([initFont(), initRenderer()])
-  .then(() => render())
+  .then(() => {
+    installGlobalHandlers();
+    return render();
+  })
   .catch((e) => console.log(e));
-
-document.getElementById("root").addEventListener("keypress", (e) => controller.handleKeyPress(e));
-document.getElementById("root").addEventListener("keydown", (e) => controller.handleKeyDown(e));
-document.getElementById("root").addEventListener("keyup", (e) => controller.handleKeyUp(e));
-
-// Register wheel handler with { passive: false } so preventDefault() can
-// suppress browser page zoom on Ctrl+scroll / pinch-to-zoom.
-document.getElementById("root").addEventListener(
-  "wheel",
-  (e) => inputController.handleWheel(e),
-  { passive: false }
-);
-
-// Use native copy/cut events so the browser handles clipboard permissions.
-// This works across Chrome, Safari, and Firefox (including macOS).
-document.addEventListener("copy", (e) => {
-  if (store.selectTool.selectBox) {
-    e.preventDefault();
-    const copiedText = layerToText(
-      store.currentCanvas.committed,
-      store.selectTool.selectBox
-    );
-    e.clipboardData.setData("text/plain", copiedText);
-  }
-});
-
-document.addEventListener("cut", (e) => {
-  if (store.selectTool.selectBox) {
-    e.preventDefault();
-    const copiedText = layerToText(
-      store.currentCanvas.committed,
-      store.selectTool.selectBox
-    );
-    e.clipboardData.setData("text/plain", copiedText);
-    // Perform the cut (erase selected content).
-    store.selectTool.cutSelection();
-  }
-});
-
-document.addEventListener("paste", (e) => {
-  e.preventDefault();
-  const clipboardText = e.clipboardData.getData("text");
-  // Default to the center of the screen.
-  const center = canvasCenter();
-  var position = screenToCell(new Vector(center.x, center.y));
-  // Use the select tool position if set.
-  if (store.selectTool.selectBox) {
-    position = store.selectTool.selectBox.topLeft();
-  }
-  if (store.toolMode() === ToolMode.TEXT && store.textTool.currentPosition) {
-    position = store.textTool.currentPosition;
-  }
-  const pastedLayer = textToLayer(clipboardText, position);
-  store.currentTool.cleanup();
-  store.currentCanvas.setScratchLayer(pastedLayer);
-  store.currentCanvas.commitScratch();
-});

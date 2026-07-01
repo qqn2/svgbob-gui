@@ -12,6 +12,7 @@ const TOOL_LABELS: Record<number, string> = {
   [ToolMode.TEXT]: "text",
   [ToolMode.FILL]: "fill",
   [ToolMode.ERASE]: "erase",
+  [ToolMode.RAW]: "raw",
 };
 
 export function StatusBar() {

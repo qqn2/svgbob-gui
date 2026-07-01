@@ -6,6 +6,7 @@ import { IDrawFunction } from "#asciiflow/client/draw/function";
 import { DrawLine } from "#asciiflow/client/draw/line";
 import { DrawNull } from "#asciiflow/client/draw/null";
 import { DrawPlaceBlock } from "#asciiflow/client/draw/place_block";
+import { DrawRaw } from "#asciiflow/client/draw/raw";
 import { DrawSelect } from "#asciiflow/client/draw/select";
 import { DrawText } from "#asciiflow/client/draw/text";
 import { IExportConfig } from "#asciiflow/client/export";
@@ -34,6 +35,7 @@ export enum ToolMode {
   TEXT = 7,
   FILL = 8,
   ERASE = 9,
+  RAW = 10,
 }
 
 export interface IModifierKeys {
@@ -231,6 +233,7 @@ const arrowTool = new DrawLine(true);
 const selectTool = new DrawSelect();
 const freeformTool = new DrawFreeform();
 const textTool = new DrawText();
+const rawTool = new DrawRaw();
 const placeBlockTool = new DrawPlaceBlock();
 const fillTool = new DrawFill();
 const eraseTool = new DrawErase();
@@ -282,6 +285,7 @@ export const store = {
   selectTool,
   freeformTool,
   textTool,
+  rawTool,
   placeBlockTool,
   fillTool,
   eraseTool,
@@ -338,6 +342,8 @@ export const store = {
       ? freeformTool
       : mode === ToolMode.TEXT
       ? textTool
+      : mode === ToolMode.RAW
+      ? rawTool
       : mode === ToolMode.SELECT
       ? selectTool
       : mode === ToolMode.FILL
