@@ -31,6 +31,16 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
         scaled.set(anchor.add(new Vector(0, i)), fill);
       }
     }
+    if (shouldFillDownRight(layer, position, value)) {
+      for (let i = 1; i < s; i++) {
+        scaled.set(anchor.add(new Vector(i, i)), "\\");
+      }
+    }
+    if (shouldFillDownLeft(layer, position, value)) {
+      for (let i = 1; i < s; i++) {
+        scaled.set(anchor.add(new Vector(-i, i)), "/");
+      }
+    }
   }
   return scaled;
 }
@@ -132,6 +142,20 @@ function shouldFillDown(layer: Layer, position: Vector, value: string): boolean 
     connects(value, Direction.DOWN) ||
     connects(down, Direction.UP) ||
     (isAsciiVertical(value) && isAsciiVertical(down))
+  );
+}
+
+function shouldFillDownRight(layer: Layer, position: Vector, value: string): boolean {
+  return (
+    value === "\\" &&
+    layer.get(position.add(new Vector(1, 1))) === "\\"
+  );
+}
+
+function shouldFillDownLeft(layer: Layer, position: Vector, value: string): boolean {
+  return (
+    value === "/" &&
+    layer.get(position.add(new Vector(-1, 1))) === "/"
   );
 }
 
