@@ -18,6 +18,10 @@ import { canvasCenter } from "#asciiflow/client/canvas_viewport";
 import { renderedVersion, screenToCell } from "#asciiflow/client/view";
 import { initFont } from "#asciiflow/client/font";
 import { initRenderer } from "#asciiflow/client/renderer";
+import {
+  blockReviewDrawingName,
+  buildBlockReviewLayer,
+} from "#asciiflow/client/block_review";
 
 import { HashRouter, Route, useParams } from "react-router-dom";
 import * as ReactDOM from "react-dom";
@@ -63,6 +67,7 @@ export interface IRouteProps {
   local?: string;
   share?: string;
   encoded?: string;
+  reviewScale?: string;
 }
 
 export const App = () => {
@@ -72,6 +77,15 @@ export const App = () => {
 
   // Sync route params into the store.
   React.useEffect(() => {
+    if (routeProps.reviewScale !== undefined) {
+      const scale = Number(routeProps.reviewScale || "3");
+      store.setRoute(DrawingId.local(blockReviewDrawingName(scale)));
+      store.currentCanvas.committed = buildBlockReviewLayer(scale);
+      store.currentCanvas.clearScratch();
+      store.setToolMode(ToolMode.SELECT);
+      window.setTimeout(() => store.fitDiagram(), 0);
+      return;
+    }
     if (routeProps.encoded) {
       store.setRoute(DrawingId.local("bob-import"));
       loadFromBobRoute(decodeURIComponent(routeProps.encoded));
@@ -85,7 +99,12 @@ export const App = () => {
     if (!routeProps.share && !routeProps.local) {
       seedDefaultDiagramIfEmpty();
     }
-  }, [routeProps.share, routeProps.local, routeProps.encoded]);
+  }, [
+    routeProps.share,
+    routeProps.local,
+    routeProps.encoded,
+    routeProps.reviewScale,
+  ]);
 
   return (
     <div className={styles.app} data-theme={themeMode}>
@@ -107,6 +126,7 @@ async function render() {
   ReactDOM.render(
     <HashRouter>
       <Route exact path="/" component={App} />
+      <Route exact path="/review/blocks/:reviewScale?" component={App} />
       <Route path="/local/:local" component={App} />
       <Route path="/share/:share" component={App} />
       <Route path="/bob/:encoded" component={App} />

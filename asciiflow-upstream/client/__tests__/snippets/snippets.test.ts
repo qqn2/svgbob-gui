@@ -4,7 +4,12 @@ import {
   SNIPPET_GROUPS,
   previewText,
 } from "#asciiflow/client/SnippetsPanel";
+import {
+  blockReviewDrawingName,
+  buildBlockReviewLayer,
+} from "#asciiflow/client/block_review";
 import { SNIPPETS, resolveSnippetText } from "#asciiflow/client/lib/snippets/snippets";
+import { layerToText } from "#asciiflow/client/text_utils";
 
 function unquotedMultiCharTextTokens(text: string): string[] {
   const tokens: string[] = [];
@@ -44,6 +49,7 @@ describe("snippets", () => {
       "actor",
       "cloud",
       "state tree",
+      "binary tree",
       "plot axes",
     ]);
     for (const snippet of SNIPPETS) {
@@ -80,8 +86,14 @@ describe("snippets", () => {
         "cloud",
         "sequence",
         "state tree",
+        "binary tree",
+        "railroad",
         "chip shell",
-        "io cluster",
+        "generic block",
+        "network topo",
+        "uml inherit",
+        "logic cone",
+        "radial fanout",
         "clk tree",
         "rst tree",
         "auth flow",
@@ -96,7 +108,13 @@ describe("snippets", () => {
     expect(SNIPPET_DISPLAY_LABELS["decision"]).toBe("Decision");
     expect(SNIPPET_DISPLAY_LABELS["database"]).toBe("Database");
     expect(SNIPPET_DISPLAY_LABELS["sequence"]).toBe("Sequence");
+    expect(SNIPPET_DISPLAY_LABELS["binary tree"]).toBe("Binary tree");
+    expect(SNIPPET_DISPLAY_LABELS["railroad"]).toBe("Railroad");
     expect(SNIPPET_DISPLAY_LABELS["arr lbl"]).toBe("Labeled arrow");
+    expect(SNIPPET_DISPLAY_LABELS["radial fanout"]).toBe("Radial fanout");
+    expect(SNIPPET_DISPLAY_LABELS["logic cone"]).toBe("Logic cone");
+    expect(SNIPPET_DISPLAY_LABELS["network topo"]).toBe("Network topology");
+    expect(SNIPPET_DISPLAY_LABELS["uml inherit"]).toBe("UML inheritance");
     expect(SNIPPET_DISPLAY_LABELS["clk tree"]).toBe("Clock tree");
     expect(SNIPPET_DISPLAY_LABELS["rst tree"]).toBe("Reset tree");
     expect(SNIPPET_DISPLAY_LABELS["reg access"]).toBe("Register access");
@@ -165,6 +183,19 @@ describe("snippets", () => {
 
     for (const term of sourceSpecificTerms) {
       expect(text, term).not.toContain(term);
+    }
+  });
+
+  it("builds a hidden review sheet for every snippet at the requested scale", () => {
+    const text = layerToText(buildBlockReviewLayer(3));
+
+    expect(blockReviewDrawingName(3)).toBe("block-review-3x");
+    expect(text).toContain("process - Flowchart process (3x)");
+    expect(text).toContain(
+      "generic block - Generic IO cluster with fabric, config, interrupt, and pads (3x)"
+    );
+    for (const snippet of SNIPPETS) {
+      expect(text, snippet.label).toContain(`${snippet.label} - ${snippet.title} (3x)`);
     }
   });
 });

@@ -150,20 +150,23 @@ export const SNIPPETS: Snippet[] = [
     label: "decision",
     title: "Flowchart decision diamond",
     text: asciiDiagram`
-          /\
-         /  \
-        <"OK">
-         \  /
-          \/
+           /\
+          /  \
+         /    \
+        /  "OK"\
+        \      /
+         \    /
+          \  /
+           \/
     `,
   },
   {
     label: "io shape",
     title: "Flowchart input / output shape",
     text: asciiDiagram`
-        /----------/
+        .----------.
        / "DATA"   /
-      /----------/
+      '----------'
     `,
   },
   {
@@ -172,7 +175,7 @@ export const SNIPPETS: Snippet[] = [
     text: asciiDiagram`
         .------.
        / "DB" /|
-      +------+ |
+      '------' |
       |      | /
       '------'
     `,
@@ -304,7 +307,7 @@ export const SNIPPETS: Snippet[] = [
     label: "pipeline",
     title: "3-stage pipeline",
     text: asciiDiagram`
-      +---------- +     +-----------+      +-----------+
+      +-----------+     +-----------+      +-----------+
       |           |     |           |      |           |
       | "STAGE 1" |---->| "STAGE 2" |----->| "STAGE 3" |
       |           |     |           |      |           |
@@ -388,18 +391,6 @@ export const SNIPPETS: Snippet[] = [
     ),
   },
   {
-    label: "FIFO",
-    title: "FIFO buffer",
-    text: asciiDiagram`
-      +-------+
-      | "IN"  |
-      |"FIFO" |
-      |       +---> "OUT"
-      |"ptr"  |
-      +-------+
-    `,
-  },
-  {
     label: "APB",
     title: "APB-lite slave stub",
     parametric: true,
@@ -469,13 +460,22 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
+    label: "logic",
+    title: "Logic gate",
+    text: asciiDiagram`
+     "func_in" ──►┬──────.
+                  │"GATE" )──► "out"
+     "scan_in" ──►┴──────'
+    `,
+  },
+  {
     label: "IRQ",
     title: "Interrupt OR tree",
-    text: asciiDiagramLines([
-      '"src0" -->+\\',
-      '"src1" -->+"OR"+--> "IRQ"',
-      '"src2" -->+/',
-    ]),
+    text: asciiDiagram`
+       "src0" -->+────.
+       "src1" -->+"OR" )--> "IRQ"
+       "src2" -->+────'
+   `,
   },
   {
     label: "chip shell",
@@ -498,21 +498,21 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
-    label: "io cluster",
+    label: "generic block",
     title: "Generic IO cluster with fabric, config, interrupt, and pads",
     text: asciiDiagram`
       +------------------------- "IO cluster" ------------------------+
       |                                                               |
-      | "cfg bus" -->+-------------+                                 |
-      |              | "reg bank"  +---> "ctrl/status"              |
-      |              +------+------+                                 |
-      |                     |                                        |
-      |                     v                                        |
-      |              +-------------+     +-------------+  +---------+|
-      | "fabric" --->+ "ip block"  +---->| "buffer"    +->| "phy"   ++--> "pins"
-      |              +------+------+     +-------------+  +---------+|
-      |                     |                                        |
-      |                     +---------------------------> "irq"      |
+      | "cfg bus" -->+-------------+                                  |
+      |              | "reg bank"  +---> "ctrl/status"                |
+      |              +------+------+                                  |
+      |                     |                                         |
+      |                     v                                         |
+      |              +-------------+     +-------------+  +---------+ |
+      | "fabric" --->+ "ip block"  +---->| "buffer"    +->| "phy"   |-+--> "pins"
+      |              +------+------+     +-------------+  +---------+ |
+      |                     |                                         |
+      |                     +-----------------------------------------+--> "irq"
       +---------------------------------------------------------------+
     `,
   },
@@ -523,8 +523,8 @@ export const SNIPPETS: Snippet[] = [
       "osc_clk" --->+----------+     +-----------+     +-------------+
                     | "clk mux"+---->| "divider" +---->| "clk gate"  |
       "pll_clk" --->+----------+     +-----------+     +------+------+
-                                                                |
-                         +--------------------------------------+---+
+                                                              |
+                         +------------------------------------+-----+
                          |              |              |            |
                          v              v              v            v
                     "ip0_clk"      "ip1_clk"      "bus_clk"    "test_clk"
@@ -552,17 +552,17 @@ export const SNIPPETS: Snippet[] = [
       +-------------+        +-------------+        +-------------+
       | "image"     +------->| "hash"      +------->| "compare"   |----> "valid"
       +------+------+        +-------------+        +------+------+
-             |                                            ^
-             v                                            |
+             |                                             ^
+             v                                             |
       +-------------+        +-------------+        +------+------+
       | "signature" +------->| "decrypt"   +------->| "cert hash" |
       +-------------+        +------+------+        +-------------+
-                                  ^
-                                  |
-                            +-----+------+
-                            | "root key" |
-                            |   "OTP"    |
-                            +------------+
+                                    ^
+                                    |
+                              +-----+------+
+                              | "root key" |
+                              |   "OTP"    |
+                              +------------+
     `,
   },
   {
@@ -634,6 +634,95 @@ export const SNIPPETS: Snippet[] = [
       "source" ----------+-----------> "dst1"
                          |
                          +-----------> "dst2"
+    `,
+  },
+  {
+    label: "network topo",
+    title: "Generic cloud / database / client topology",
+    text: asciiDiagram`
+             .-------------.
+            / "Cloud"      \
+           (  "Service"     )<------>.----------.
+            \             .'        | "DB"     |
+             '-----------'          '----------'
+                   ^
+                   |
+              "Internet"
+              /    |     \
+             v     v      v
+      +----------+ +----------+ +----------+
+      | "Client" | |"Gateway" | |"Server"  |
+      +----------+ +----+-----+ +----+-----+
+                         |            |
+                         +----------> "LAN"
+    `,
+  },
+  {
+    label: "uml inherit",
+    title: "UML inheritance / interface implementation",
+    text: asciiDiagram`
+      +----------+        +---------------+
+      | "Base"   |        | "Interface"   |
+      +----^-----+        +-------^-------+
+          /_\                    /_\
+           |                      :
+           |                      :
+      +-----------+        +--------------------+
+      | "Derived" |        | "Implementation"   |
+      +-----------+        +--------------------+
+    `,
+  },
+  {
+    label: "binary tree",
+    title: "Binary hierarchy / decision tree",
+    text: asciiDiagram`
+              "root"
+               / \
+              /   \
+          "left"  "right"
+           / \      / \
+         "A" "B"  "C" "D"
+    `,
+  },
+  {
+    label: "logic cone",
+    title: "Combinational logic cone",
+    text: asciiDiagram`
+      "A" ----.
+              +----.
+      "B" ----'    |
+                   +----> "Y"
+      "C" ----.    |
+              +----'
+      "D" ----'
+    `,
+  },
+  {
+    label: "railroad",
+    title: "Railroad / grammar flow fragment",
+    text: asciiDiagram`
+      o---+--+--------+--("sep")--+---------+---o
+          |  |"elem"  |           | "count" |
+          |  +--------+           +---------+
+          |       ^                   |
+          +-------+-------------------+
+    `,
+  },
+  {
+    label: "radial fanout",
+    title: "Radial fanout / compass connector",
+    text: asciiDiagram`
+              ^
+              |
+         \    |    /
+          \   |   /
+           \  |  /
+      <-------+------->
+           /  |  \
+          /   |   \
+         /    |    \
+              |
+              v
     `,
   },
 ];
