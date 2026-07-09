@@ -150,14 +150,15 @@ export const SNIPPETS: Snippet[] = [
     label: "decision",
     title: "Flowchart decision diamond",
     text: asciiDiagram`
-           /\
-          /  \
-         /    \
-        /  "OK"\
-        \      /
-         \    /
-          \  /
-           \/
+           +
+          / \
+         /   \
+        /     \
+       +  "one"+
+        \     /
+         \   /
+          \ /
+           +
     `,
   },
   {
@@ -173,11 +174,11 @@ export const SNIPPETS: Snippet[] = [
     label: "database",
     title: "Database / storage cylinder",
     text: asciiDiagram`
-        .------.
-       / "DB" /|
-      '------' |
-      |      | /
-      '------'
+        .──────.
+       / "DB" /│
+      +──────+ +
+      │      │/
+      '──────'
     `,
   },
   {
@@ -265,21 +266,6 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
-    label: "box",
-    title: "Empty labeled box",
-    parametric: true,
-    defaultParams: { label: "LABEL" },
-    text: makeParamDiagram(
-      `
-      +------------------+
-      | "LABEL"          |
-      +------------------+
-      `,
-      { label: "LABEL" },
-      { label: 10 }
-    ),
-  },
-  {
     label: "arrow",
     title: "Right arrow",
     text: asciiDiagram`---------->`,
@@ -304,6 +290,21 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
+    label: "box",
+    title: "Generic labeled box",
+    parametric: true,
+    defaultParams: { label: "LABEL" },
+    text: makeParamDiagram(
+      `
+      +----------+
+      | "LABEL"  |
+      +----------+
+      `,
+      { label: "LABEL" },
+      { label: 8 }
+    ),
+  },
+  {
     label: "pipeline",
     title: "3-stage pipeline",
     text: asciiDiagram`
@@ -323,7 +324,7 @@ export const SNIPPETS: Snippet[] = [
       `
                +--------------+
          D --->+ D         Q  +---> Q
-               |   "FF"       |
+               |     "FF"     |
       "CLK" ---+>             |
                +--------------+
       `,
@@ -524,10 +525,10 @@ export const SNIPPETS: Snippet[] = [
                     | "clk mux"+---->| "divider" +---->| "clk gate"  |
       "pll_clk" --->+----------+     +-----------+     +------+------+
                                                               |
-                         +------------------------------------+-----+
-                         |              |              |            |
-                         v              v              v            v
-                    "ip0_clk"      "ip1_clk"      "bus_clk"    "test_clk"
+                                          +-------------------+----------------------+
+                                          |              |              |            |
+                                          v              v              v            v
+                                     "ip0_clk"      "ip1_clk"      "bus_clk"    "test_clk"
     `,
   },
   {
@@ -640,21 +641,23 @@ export const SNIPPETS: Snippet[] = [
     label: "network topo",
     title: "Generic cloud / database / client topology",
     text: asciiDiagram`
-             .-------------.
-            / "Cloud"      \
-           (  "Service"     )<------>.----------.
-            \             .'        | "DB"     |
-             '-----------'          '----------'
-                   ^
-                   |
-              "Internet"
-              /    |     \
-             v     v      v
+                 .------------.
+                / "Cloud"      \         .----------.
+               (  "Service"     )<------>| "DB"     |
+                \              /         '----------'
+                 '------------'
+                        ^
+                        |
+
+                   "Internet"
+
+              /         |       \
+             v          v        v
       +----------+ +----------+ +----------+
       | "Client" | |"Gateway" | |"Server"  |
-      +----------+ +----+-----+ +----+-----+
-                         |            |
-                         +----------> "LAN"
+      +----------+ +-----+----+ +----------+
+                         |           |
+                         +-------> "LAN"
     `,
   },
   {

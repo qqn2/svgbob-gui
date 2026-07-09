@@ -67,6 +67,40 @@ export class DrawRaw extends AbstractDrawFunction {
     this.currentPosition = null;
   }
 
+  public cutCurrentLine(): string {
+    if (!this.currentPosition) {
+      this.setCursor(store.cursorCell ? new Vector(store.cursorCell.x, store.cursorCell.y) : new Vector(0, 0));
+    }
+
+    const y = this.currentPosition.y;
+    const rowEntries = store.currentCanvas.committed
+      .entries()
+      .filter(([position]) => position.y === y)
+      .sort(([a], [b]) => a.x - b.x);
+
+    if (rowEntries.length === 0) {
+      return "";
+    }
+
+    const minX = rowEntries[0][0].x;
+    const maxX = rowEntries[rowEntries.length - 1][0].x;
+    const patch = new Layer();
+    const chars: string[] = [];
+
+    for (let x = minX; x <= maxX; x++) {
+      const position = new Vector(x, y);
+      const existing = store.currentCanvas.committed.get(position);
+      chars.push(existing ?? " ");
+      if (existing != null) {
+        patch.set(position, "");
+      }
+    }
+
+    this.commitPatch(patch);
+    this.setCursor(new Vector(minX, y));
+    return chars.join("");
+  }
+
   private setCursor(position: Vector) {
     this.currentPosition = position;
     store.setCursorCell({ x: position.x, y: position.y });

@@ -101,4 +101,18 @@ describe("DrawRaw", () => {
     );
     expect(store.rawTool.currentPosition).toEqual(new Vector(1, 1));
   });
+
+  it("cuts the current line for editor-style ctrl+x handling", () => {
+    store.currentCanvas.committed = textToLayer(["AAA", "B B", "CCC"].join("\n"), new Vector(0, 0));
+
+    store.rawTool.start(new Vector(1, 1));
+    const cutText = store.rawTool.cutCurrentLine();
+
+    expect(cutText).toBe("B B");
+    expect(store.currentCanvas.committed.get(new Vector(0, 1))).toBeNull();
+    expect(store.currentCanvas.committed.get(new Vector(2, 1))).toBeNull();
+    expect(store.currentCanvas.committed.get(new Vector(0, 0))).toBe("A");
+    expect(store.currentCanvas.committed.get(new Vector(0, 2))).toBe("C");
+    expect(store.rawTool.currentPosition).toEqual(new Vector(0, 1));
+  });
 });

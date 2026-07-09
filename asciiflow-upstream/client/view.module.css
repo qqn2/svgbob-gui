@@ -3,3 +3,27 @@
   inset: 0;
   overflow: hidden;
 }
+
+.canvasScroll {
+  position: absolute;
+  inset: 0;
+  overflow: scroll;
+  z-index: 0;
+}
+
+.canvasScrollSizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 100%;
+  min-height: 100%;
+  pointer-events: none;
+}
+
+.canvasSurface {
+  position: sticky;
+  left: 0;
+  top: 0;
+  display: block;
+  z-index: 1;
+}

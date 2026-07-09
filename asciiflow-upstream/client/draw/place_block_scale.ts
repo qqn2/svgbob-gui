@@ -47,6 +47,8 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
 
 interface TextRun {
   positions: Vector[];
+  start: Vector;
+  end: Vector;
 }
 
 interface Compression {
@@ -57,25 +59,74 @@ interface Compression {
 
 function findTextRuns(layer: Layer): TextRun[] {
   const runs: TextRun[] = [];
+  const quotedPositionKeys = new Set<string>();
+
   for (const [position, value] of layer.entries()) {
+    if (value !== '"') continue;
+
+    const left = position.add(Direction.LEFT);
+    if (layer.get(left) === '"') {
+      continue;
+    }
+
+    const end = findQuoteEnd(layer, position);
+    if (!end) {
+      continue;
+    }
+
+    const positions = existingPositionsInRange(layer, position, end);
+    for (const runPosition of positions) {
+      quotedPositionKeys.add(runPosition.toString());
+    }
+    runs.push({ positions, start: position, end });
+  }
+
+  for (const [position, value] of layer.entries()) {
+    if (quotedPositionKeys.has(position.toString())) continue;
     if (!isText(value)) continue;
 
     const left = position.add(Direction.LEFT);
-    if (isText(layer.get(left))) {
+    if (isText(layer.get(left)) && !quotedPositionKeys.has(left.toString())) {
       continue;
     }
 
     const positions = [position];
     let cursor = position.add(Direction.RIGHT);
-    while (isText(layer.get(cursor))) {
+    while (isText(layer.get(cursor)) && !quotedPositionKeys.has(cursor.toString())) {
       positions.push(cursor);
       cursor = cursor.add(Direction.RIGHT);
     }
     if (positions.length >= 2) {
-      runs.push({ positions });
+      runs.push({
+        positions,
+        start: positions[0],
+        end: positions[positions.length - 1],
+      });
     }
   }
   return runs;
+}
+
+function findQuoteEnd(layer: Layer, start: Vector): Vector | null {
+  let cursor = start.add(Direction.RIGHT);
+  while (cursor.x < start.x + 200) {
+    if (layer.get(cursor) === '"') {
+      return cursor;
+    }
+    cursor = cursor.add(Direction.RIGHT);
+  }
+  return null;
+}
+
+function existingPositionsInRange(layer: Layer, start: Vector, end: Vector): Vector[] {
+  const positions: Vector[] = [];
+  for (let x = start.x; x <= end.x; x++) {
+    const position = new Vector(x, start.y);
+    if (layer.get(position) != null) {
+      positions.push(position);
+    }
+  }
+  return positions;
 }
 
 function bridgedTextRunCompressions(
@@ -85,17 +136,15 @@ function bridgedTextRunCompressions(
 ): Compression[] {
   return runs
     .filter((run) => {
-      const start = run.positions[0];
-      const end = run.positions[run.positions.length - 1];
       return (
-        isAsciiHorizontal(layer.get(start.add(Direction.LEFT))) &&
-        isAsciiHorizontal(layer.get(end.add(Direction.RIGHT)))
+        isAsciiHorizontal(layer.get(run.start.add(Direction.LEFT))) &&
+        isAsciiHorizontal(layer.get(run.end.add(Direction.RIGHT)))
       );
     })
     .map((run) => ({
-      y: run.positions[0].y,
-      fromX: run.positions[run.positions.length - 1].x + 1,
-      delta: run.positions.length * (scale - 1),
+      y: run.start.y,
+      fromX: run.end.x + 1,
+      delta: (run.end.x - run.start.x + 1) * (scale - 1),
     }));
 }
 
@@ -106,13 +155,15 @@ function textRunScaledOffsets(
 ): Map<string, Vector> {
   const offsets = new Map<string, Vector>();
   for (const run of runs) {
-    const position = run.positions[0];
     const start = new Vector(
-      position.x * scale - compressionBefore(compressions, position),
-      position.y * scale
+      run.start.x * scale - compressionBefore(compressions, run.start),
+      run.start.y * scale
     );
-    run.positions.forEach((runPosition, index) => {
-      offsets.set(runPosition.toString(), start.add(new Vector(index, 0)));
+    run.positions.forEach((runPosition) => {
+      offsets.set(
+        runPosition.toString(),
+        start.add(new Vector(runPosition.x - run.start.x, 0))
+      );
     });
   }
   return offsets;
@@ -131,6 +182,8 @@ function shouldFillRight(layer: Layer, position: Vector, value: string): boolean
     connects(value, Direction.RIGHT) ||
     connects(right, Direction.LEFT) ||
     value === "=" ||
+    (isShapeEndpoint(value) && isAsciiHorizontal(right)) ||
+    (isAsciiHorizontal(value) && isShapeEndpoint(right)) ||
     (isAsciiHorizontal(value) && isAsciiHorizontal(right))
   );
 }
@@ -141,26 +194,34 @@ function shouldFillDown(layer: Layer, position: Vector, value: string): boolean 
   return (
     connects(value, Direction.DOWN) ||
     connects(down, Direction.UP) ||
+    (isShapeEndpoint(value) && isAsciiVertical(down)) ||
+    (isAsciiVertical(value) && isShapeEndpoint(down)) ||
     (isAsciiVertical(value) && isAsciiVertical(down))
   );
 }
 
 function shouldFillDownRight(layer: Layer, position: Vector, value: string): boolean {
+  const downRight = layer.get(position.add(new Vector(1, 1)));
   return (
-    value === "\\" &&
-    layer.get(position.add(new Vector(1, 1))) === "\\"
+    (value === "\\" && (downRight === "\\" || isShapeEndpoint(downRight))) ||
+    (isShapeEndpoint(value) && downRight === "\\")
   );
 }
 
 function shouldFillDownLeft(layer: Layer, position: Vector, value: string): boolean {
+  const downLeft = layer.get(position.add(new Vector(-1, 1)));
   return (
-    value === "/" &&
-    layer.get(position.add(new Vector(-1, 1))) === "/"
+    (value === "/" && (downLeft === "/" || isShapeEndpoint(downLeft))) ||
+    (isShapeEndpoint(value) && downLeft === "/")
   );
 }
 
 function isAsciiHorizontal(value: string): boolean {
   return value === "+" || value === "-" || value === "=" || value === "<" || value === ">";
+}
+
+function isShapeEndpoint(value: string): boolean {
+  return value === "+" || value === "." || value === "'";
 }
 
 function isAsciiVertical(value: string): boolean {

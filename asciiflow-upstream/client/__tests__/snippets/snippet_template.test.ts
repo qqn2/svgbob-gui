@@ -27,4 +27,23 @@ describe("snippet_template", () => {
   it("supports backslash-heavy ASCII via line arrays", () => {
     expect(asciiDiagramLines(["a -->+\\", "b -->+/"])).toContain("\\");
   });
+
+  it("keeps disconnected plus signs literal", () => {
+    expect(asciiDiagram`
+        +
+       / \
+      + X +
+       \ /
+        +
+    `).toBe(
+      [
+        "  +",
+        " / \\",
+        "+ X +",
+        " \\ /",
+        "  +",
+        "",
+      ].join("\n")
+    );
+  });
 });

@@ -7,8 +7,8 @@ import { screenToCell, setCanvasCursor } from "#asciiflow/client/view";
 
 import * as React from "react";
 
-function isInputTarget(event: KeyboardEvent) {
-  const t = event.target;
+export function isEditableTarget(target: EventTarget | null): boolean {
+  const t = target;
   if (!t || typeof t !== "object" || !("tagName" in t)) {
     return false;
   }
@@ -18,6 +18,19 @@ function isInputTarget(event: KeyboardEvent) {
     return true;
   }
   return el.isContentEditable;
+}
+
+function isKey(event: KeyboardEvent, key: string, keyCode: number): boolean {
+  return event.key.toLowerCase() === key || event.keyCode === keyCode;
+}
+
+function cancelActiveState(): void {
+  store.placeBlockTool.cancel();
+  store.currentTool.cleanup();
+  store.currentCanvas.clearScratch();
+  store.currentCanvas.clearSelection();
+  store.selectTool.selectBox = null;
+  store.setFillStatus(null);
 }
 
 /**
@@ -66,14 +79,14 @@ export class Controller {
   }
 
   handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      cancelActiveState();
+      event.preventDefault();
+      return;
+    }
     // Don't intercept keypresses when an input or textarea is focused.
-    if (isInputTarget(event)) return;
+    if (isEditableTarget(event.target)) return;
     if (store.placeBlockTool.isActive) {
-      if (event.key === "Escape") {
-        store.placeBlockTool.cancel();
-        event.preventDefault();
-        return;
-      }
       if (event.key === "r" || event.key === "R") {
         store.placeBlockTool.rotateCW();
         event.preventDefault();
@@ -128,7 +141,7 @@ export class Controller {
       // Copy (Ctrl+C), Cut (Ctrl+X), and Paste (Ctrl+V) are handled by
       // native copy/cut/paste events in app.tsx — don't intercept them here
       // so the browser fires those events with proper clipboard permissions.
-      if (event.keyCode === 65) {
+      if (isKey(event, "a", 65)) {
         store.placeBlockTool.cancel();
         store.currentCanvas.clearScratch();
         const bbox = layerBBox(store.currentCanvas.committed);
@@ -144,7 +157,7 @@ export class Controller {
         event.preventDefault();
         return;
       }
-      if (event.keyCode === 90) {
+      if (isKey(event, "z", 90)) {
         if (event.shiftKey) {
           store.currentCanvas.redo();
         } else {
@@ -160,20 +173,34 @@ export class Controller {
         }
         // Disable browser-specific behavior on Cmd/Ctrl+Z: https://github.com/lewish/asciiflow/issues/189
         event.preventDefault();
+        return;
       }
-      if (event.keyCode === 89) {
+      if (isKey(event, "y", 89)) {
         store.currentCanvas.redo();
         // Disable browser-specific behavior on Cmd/Ctrl+Y: https://github.com/lewish/asciiflow/issues/189
         event.preventDefault();
+        return;
       }
     }
 
     if (event.keyCode === 8) {
+      if (store.selectedToolMode !== ToolMode.RAW) {
+        store.currentTool.cleanup();
+        store.setToolMode(ToolMode.ERASE);
+        event.preventDefault();
+        return;
+      }
       specialKeyCode = constants.KEY_BACKSPACE;
       // Disable navigation back action on backspace.
       event.preventDefault();
     }
     if (event.keyCode === 46) {
+      if (store.selectedToolMode !== ToolMode.RAW) {
+        store.currentTool.cleanup();
+        store.setToolMode(ToolMode.ERASE);
+        event.preventDefault();
+        return;
+      }
       specialKeyCode = constants.KEY_DELETE;
     }
     if (event.keyCode === 13) {

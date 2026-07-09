@@ -30,6 +30,11 @@ export type PanelId = "file" | "export" | "snippets" | "help" | "view" | null;
 // Module-level panel state so it survives React Router remounts.
 let _currentPanel: PanelId = null;
 const _panelListeners = new Set<(p: PanelId) => void>();
+export function setActivePanel(id: PanelId) {
+  _currentPanel = id;
+  _panelListeners.forEach((listener) => listener(id));
+}
+
 export function usePanel(): [PanelId, (id: PanelId) => void] {
   const [panel, _setPanel] = useState<PanelId>(_currentPanel);
   useEffect(() => {
@@ -37,11 +42,7 @@ export function usePanel(): [PanelId, (id: PanelId) => void] {
     _panelListeners.add(listener);
     return () => { _panelListeners.delete(listener); };
   }, []);
-  const setPanel = (id: PanelId) => {
-    _currentPanel = id;
-    _panelListeners.forEach((l) => l(id));
-  };
-  return [panel, setPanel];
+  return [panel, setActivePanel];
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Controller } from "#asciiflow/client/controller";
+import { Box } from "#asciiflow/client/common";
+import { Controller, isEditableTarget } from "#asciiflow/client/controller";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
+import { layerToText, textToLayer } from "#asciiflow/client/text_utils";
 import { Vector } from "#asciiflow/client/vector";
 
 function keyDown(
@@ -40,6 +42,13 @@ describe("Controller keyboard dispatch", () => {
     store.currentCanvas.clear();
     store.textTool.cleanup();
     store.rawTool.cleanup();
+  });
+
+  it("identifies native editable targets for keyboard and clipboard handlers", () => {
+    expect(isEditableTarget({ tagName: "INPUT", isContentEditable: false } as HTMLInputElement)).toBe(true);
+    expect(isEditableTarget({ tagName: "TEXTAREA", isContentEditable: false } as HTMLTextAreaElement)).toBe(true);
+    expect(isEditableTarget({ tagName: "DIV", isContentEditable: true } as HTMLDivElement)).toBe(true);
+    expect(isEditableTarget({ tagName: "CANVAS", isContentEditable: false } as HTMLCanvasElement)).toBe(false);
   });
 
   it("dispatches a printable key once from keydown", () => {
@@ -94,5 +103,101 @@ describe("Controller keyboard dispatch", () => {
     controller.handleKeyDown(keyDown("d", { target: input }));
 
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("undoes committed edits with ctrl+z", () => {
+    store.currentCanvas.setScratchLayer(textToLayer("A", new Vector(0, 0)));
+    store.currentCanvas.commitScratch();
+    expect(layerToText(store.currentCanvas.committed)).toBe("A");
+
+    const event = keyDown("z", { ctrlKey: true, keyCode: 0 });
+    controller.handleKeyDown(event);
+
+    expect(layerToText(store.currentCanvas.committed)).toBe("");
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it("switches delete and backspace to erase outside raw mode", () => {
+    store.setToolMode(ToolMode.TEXT);
+
+    const backspace = keyDown("Backspace", { keyCode: 8 });
+    controller.handleKeyDown(backspace);
+    expect(store.selectedToolMode).toBe(ToolMode.ERASE);
+    expect(backspace.preventDefault).toHaveBeenCalled();
+
+    store.setToolMode(ToolMode.SELECT);
+    const del = keyDown("Delete", { keyCode: 46 });
+    controller.handleKeyDown(del);
+    expect(store.selectedToolMode).toBe(ToolMode.ERASE);
+    expect(del.preventDefault).toHaveBeenCalled();
+  });
+
+  it("keeps backspace/delete editable in raw mode", () => {
+    store.setToolMode(ToolMode.RAW);
+    store.rawTool.start(new Vector(1, 0));
+    const spy = vi.spyOn(store.rawTool, "handleKey");
+
+    controller.handleKeyDown(keyDown("Backspace", { keyCode: 8 }));
+    controller.handleKeyDown(keyDown("Delete", { keyCode: 46 }));
+
+    expect(store.selectedToolMode).toBe(ToolMode.RAW);
+    expect(spy).toHaveBeenCalledWith("<backspace>", {
+      ctrl: false,
+      shift: false,
+      meta: false,
+    });
+    expect(spy).toHaveBeenCalledWith("<delete>", {
+      ctrl: false,
+      shift: false,
+      meta: false,
+    });
+  });
+
+  it("cancels transient state with escape", () => {
+    store.setToolMode(ToolMode.SELECT);
+    const box = new Box(new Vector(0, 0), new Vector(1, 1));
+    store.selectTool.selectBox = box;
+    store.currentCanvas.setSelection(box);
+    store.currentCanvas.setScratchLayer(textToLayer("A", new Vector(0, 0)));
+    store.setFillStatus({ message: "Box detected", tone: "ok" });
+
+    const event = keyDown("Escape", { keyCode: 27 });
+    controller.handleKeyDown(event);
+
+    expect(store.selectTool.selectBox).toBeNull();
+    expect(store.currentCanvas.selection).toBeNull();
+    expect(store.currentCanvas.scratch.size()).toBe(0);
+    expect(store.fillStatus).toBeNull();
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it("cancels block placement with escape even when a blocks input has focus", () => {
+    store.placeBlockTool.begin("+--+\n|  |\n+--+");
+    expect(store.placeBlockTool.isActive).toBe(true);
+    expect(store.currentCanvas.scratch.size()).toBeGreaterThan(0);
+
+    const input = {
+      tagName: "INPUT",
+      isContentEditable: false,
+    } as HTMLInputElement;
+    const event = keyDown("Escape", { keyCode: 27, target: input });
+
+    controller.handleKeyDown(event);
+
+    expect(store.placeBlockTool.isActive).toBe(false);
+    expect(store.currentCanvas.scratch.size()).toBe(0);
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it("leaves ctrl+x for the native cut event", () => {
+    store.setToolMode(ToolMode.TEXT);
+    store.textTool.start(new Vector(1, 1));
+    const spy = vi.spyOn(store.textTool, "handleKey");
+    const event = keyDown("x", { ctrlKey: true });
+
+    controller.handleKeyDown(event);
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(event.preventDefault).not.toHaveBeenCalled();
   });
 });

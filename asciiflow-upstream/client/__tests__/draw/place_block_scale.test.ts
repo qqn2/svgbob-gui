@@ -18,11 +18,39 @@ describe("place_block_scale", () => {
     );
   });
 
+  it("keeps rounded ASCII boxes closed when scaled", () => {
+    const scaled = scalePlacementLayer(textToLayer(".--.\n|  |\n'--'"), 2);
+
+    expect(layerToText(scaled)).toBe(
+      [
+        ".-----.",
+        "|     |",
+        "|     |",
+        "|     |",
+        "'-----'",
+      ].join("\n")
+    );
+  });
+
   it("keeps label text compact when scaled", () => {
     const scaled = scalePlacementLayer(textToLayer("| MUX |"), 3);
 
     expect(layerToText(scaled)).toContain("MUX");
     expect(layerToText(scaled)).not.toContain("M  U  X");
+  });
+
+  it("keeps quoted labels compact when scaled", () => {
+    const scaled = scalePlacementLayer(textToLayer('"FA"'), 3);
+
+    expect(layerToText(scaled)).toBe('"FA"');
+  });
+
+  it("preserves spaces inside quoted labels without expanding quotes", () => {
+    const scaled = scalePlacementLayer(textToLayer('"blk A"'), 3);
+
+    expect(layerToText(scaled)).toBe('"blk A"');
+    expect(layerToText(scaled)).not.toContain('"  blk');
+    expect(layerToText(scaled)).not.toContain('A  "');
   });
 
   it("does not treat label letters as connector arrows", () => {
@@ -63,5 +91,37 @@ describe("place_block_scale", () => {
     expect(scaled.get(new Vector(2, 1))).toBe("/");
     expect(scaled.get(new Vector(1, 2))).toBe("/");
     expect(scaled.get(new Vector(0, 3))).toBe("/");
+  });
+
+  it("extends slash and backslash edges connected to plus endpoints", () => {
+    const scaled = scalePlacementLayer(textToLayer(" + \n/ \\"), 2);
+
+    expect(scaled.get(new Vector(2, 0))).toBe("+");
+    expect(scaled.get(new Vector(1, 1))).toBe("/");
+    expect(scaled.get(new Vector(0, 2))).toBe("/");
+    expect(scaled.get(new Vector(3, 1))).toBe("\\");
+    expect(scaled.get(new Vector(4, 2))).toBe("\\");
+  });
+
+  it("extends diagonal edges from slash and backslash to lower endpoints", () => {
+    const scaled = scalePlacementLayer(textToLayer(" / \\\n+   +"), 2);
+
+    expect(scaled.get(new Vector(2, 0))).toBe("/");
+    expect(scaled.get(new Vector(1, 1))).toBe("/");
+    expect(scaled.get(new Vector(0, 2))).toBe("+");
+    expect(scaled.get(new Vector(6, 0))).toBe("\\");
+    expect(scaled.get(new Vector(7, 1))).toBe("\\");
+    expect(scaled.get(new Vector(8, 2))).toBe("+");
+  });
+
+  it("extends diagonal edges connected to dot and quote endpoints", () => {
+    const scaled = scalePlacementLayer(textToLayer(" . \n/ \\\n'  '"), 2);
+
+    expect(scaled.get(new Vector(2, 0))).toBe(".");
+    expect(scaled.get(new Vector(1, 1))).toBe("/");
+    expect(scaled.get(new Vector(0, 2))).toBe("/");
+    expect(scaled.get(new Vector(4, 2))).toBe("\\");
+    expect(scaled.get(new Vector(5, 3))).toBe("\\");
+    expect(scaled.get(new Vector(6, 4))).toBe("'");
   });
 });

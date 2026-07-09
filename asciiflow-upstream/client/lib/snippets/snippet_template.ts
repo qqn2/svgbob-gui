@@ -63,7 +63,7 @@ function convertPlus(lines: string[], x: number, y: number): string {
   if (left && down) return UNICODE.cornerTopRight;
   if (left && up) return UNICODE.cornerBottomRight;
   if (right && up) return UNICODE.cornerBottomLeft;
-  return UNICODE.junctionAll;
+  return "+";
 }
 
 function convertChar(lines: string[], x: number, y: number): string {

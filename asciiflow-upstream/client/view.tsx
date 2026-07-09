@@ -44,6 +44,8 @@ export const View = ({ ...rest }: React.HTMLAttributes<HTMLCanvasElement>) => {
   const route = useAppStore((s) => s.route);
 
   const hostRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const syncingScrollRef = useRef(false);
   const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
   const [dims, setDims] = useState({
     w: getCanvasViewport().width,
@@ -61,22 +63,28 @@ export const View = ({ ...rest }: React.HTMLAttributes<HTMLCanvasElement>) => {
 
   useEffect(() => {
     const host = hostRef.current;
+    const scroller = scrollRef.current;
     if (!host) return;
 
     const sync = () => {
       const r = host.getBoundingClientRect();
+      const width = scroller?.clientWidth || r.width;
+      const height = scroller?.clientHeight || r.height;
       setCanvasViewport({
         left: r.left,
         top: r.top,
-        width: r.width,
-        height: r.height,
+        width,
+        height,
       });
-      setDims({ w: r.width, h: r.height });
+      setDims({ w: width, h: height });
     };
 
     sync();
     const ro = new ResizeObserver(sync);
     ro.observe(host);
+    if (scroller) {
+      ro.observe(scroller);
+    }
     window.addEventListener("resize", sync);
     return () => {
       ro.disconnect();
@@ -84,25 +92,95 @@ export const View = ({ ...rest }: React.HTMLAttributes<HTMLCanvasElement>) => {
     };
   }, []);
 
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+
+    const { left, top } = offsetToScrollPosition(
+      store.currentCanvas.offset,
+      store.currentCanvas.zoom,
+      dims.w,
+      dims.h
+    );
+    if (
+      Math.abs(scroller.scrollLeft - left) <= 1 &&
+      Math.abs(scroller.scrollTop - top) <= 1
+    ) {
+      return;
+    }
+
+    syncingScrollRef.current = true;
+    scroller.scrollLeft = left;
+    scroller.scrollTop = top;
+    requestAnimationFrame(() => {
+      syncingScrollRef.current = false;
+    });
+  }, [canvasVersion, route, dims.w, dims.h]);
+
+  const handleScroll = React.useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      if (syncingScrollRef.current) return;
+
+      const zoom = store.currentCanvas.zoom;
+      const next = scrollPositionToOffset(
+        event.currentTarget.scrollLeft,
+        event.currentTarget.scrollTop,
+        zoom,
+        dims.w,
+        dims.h
+      );
+      const current = store.currentCanvas.offset;
+      if (
+        Math.abs(current.x - next.x) > 0.5 ||
+        Math.abs(current.y - next.y) > 0.5
+      ) {
+        store.currentCanvas.setOffset(next);
+      }
+    },
+    [dims.w, dims.h]
+  );
+
+  const zoom = store.currentCanvas.zoom;
+  const scrollSurfaceWidth = Math.max(
+    dims.w,
+    constants.MAX_GRID_WIDTH * constants.CHAR_PIXELS_H * zoom
+  );
+  const scrollSurfaceHeight = Math.max(
+    dims.h,
+    constants.MAX_GRID_HEIGHT * constants.CHAR_PIXELS_V * zoom
+  );
+
   return (
     <div ref={hostRef} className={viewStyles.canvasHost}>
-      <canvas
-        width={dims.w * dpr}
-        height={dims.h * dpr}
-        tabIndex={0}
-        style={{
-          backgroundColor: colors.background,
-          cursor: "crosshair",
-          touchAction: "none",
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: dims.w,
-          height: dims.h,
-        }}
-        id="ascii-canvas"
-        {...rest}
-      />
+      <div
+        ref={scrollRef}
+        className={viewStyles.canvasScroll}
+        onScroll={handleScroll}
+      >
+        <canvas
+          className={viewStyles.canvasSurface}
+          width={dims.w * dpr}
+          height={dims.h * dpr}
+          tabIndex={0}
+          style={{
+            backgroundColor: colors.background,
+            cursor: "crosshair",
+            touchAction: "none",
+            width: dims.w,
+            height: dims.h,
+          }}
+          id="ascii-canvas"
+          {...rest}
+        />
+        <div
+          className={viewStyles.canvasScrollSizer}
+          style={{
+            width: scrollSurfaceWidth,
+            height: scrollSurfaceHeight,
+          }}
+          aria-hidden="true"
+        />
+      </div>
     </div>
   );
 };
@@ -355,20 +433,42 @@ export function frameToScreen(vector: Vector) {
   );
 }
 
+export function offsetToScrollPosition(
+  offset: Vector,
+  zoom: number,
+  width: number,
+  height: number
+): { left: number; top: number } {
+  return {
+    left: Math.max(0, offset.x * zoom - width / 2),
+    top: Math.max(0, offset.y * zoom - height / 2),
+  };
+}
+
+export function scrollPositionToOffset(
+  left: number,
+  top: number,
+  zoom: number,
+  width: number,
+  height: number
+): Vector {
+  return new Vector((left + width / 2) / zoom, (top + height / 2) / zoom);
+}
+
 /**
  * Given a frame coordinate, return the indices for the nearest cell.
  */
 export function frameToCell(vector: Vector) {
-  // We limit the edges in a bit, as most drawing needs a full context to work.
+  // Keep Y away from the top render guard, but allow X=0 so the first column is selectable.
   return new Vector(
     Math.min(
       Math.max(
-        1,
+        0,
         Math.round(
           (vector.x - constants.CHAR_PIXELS_H / 2) / constants.CHAR_PIXELS_H
         )
       ),
-      constants.MAX_GRID_WIDTH - 2
+      constants.MAX_GRID_WIDTH - 1
     ),
     Math.min(
       Math.max(
