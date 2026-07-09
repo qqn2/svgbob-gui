@@ -29,6 +29,19 @@ To ship a static copy: `npm run build` (creates `dist/`). Try it locally with `n
 
 Before sharing changes: `npm run check` (typecheck + tests + build).
 
+### Developer review routes
+
+Hidden block-library review sheets are available while the Vite dev server is running:
+
+- `http://127.0.0.1:5173/#/review/blocks/1` - stamp every reusable block at 1x scale
+- `http://127.0.0.1:5173/#/review/blocks/2` - stamp every reusable block at 2x scale
+- `http://127.0.0.1:5173/#/review/blocks/3` - stamp every reusable block at 3x scale
+- `http://127.0.0.1:5173/#/review/blocks/` - same route with the app default review scale
+- `http://127.0.0.1:5173/#/review/blocks/2/inspect` - card-based review with scaled ASCII beside the svgbob render
+
+Use these as a hacky admin backdoor for visually checking snippet formatting, scaling, and svgbob rendering after editing `asciiflow-upstream/client/lib/snippets/snippets.ts`.
+The inspector stores `Pending` / `OK` / `Not OK` results and failure notes locally per scale; use **Export CSV** to keep or share the review ledger.
+
 Regenerate SVG from committed ASCII (CLI, uses `svgbob-wasm`):
 
 ```bash

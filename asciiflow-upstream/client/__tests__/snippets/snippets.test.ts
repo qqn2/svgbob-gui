@@ -5,6 +5,7 @@ import {
   previewText,
 } from "#asciiflow/client/SnippetsPanel";
 import {
+  buildBlockReviewItems,
   blockReviewDrawingName,
   buildBlockReviewLayer,
 } from "#asciiflow/client/block_review";
@@ -190,12 +191,26 @@ describe("snippets", () => {
     const text = layerToText(buildBlockReviewLayer(3));
 
     expect(blockReviewDrawingName(3)).toBe("block-review-3x");
-    expect(text).toContain("process - Flowchart process (3x)");
+    expect(text).toContain('"process - Flowchart process (3x)"');
     expect(text).toContain(
-      "generic block - Generic IO cluster with fabric, config, interrupt, and pads (3x)"
+      '"generic block - Generic IO cluster with fabric, config, interrupt, and pads (3x)"'
     );
     for (const snippet of SNIPPETS) {
-      expect(text, snippet.label).toContain(`${snippet.label} - ${snippet.title} (3x)`);
+      expect(text, snippet.label).toContain(`"${snippet.label} - ${snippet.title} (3x)"`);
     }
+  });
+
+  it("builds per-snippet review items for inspector routes", () => {
+    const items = buildBlockReviewItems(2);
+    const process = items.find((item) => item.snippet.label === "process");
+    const decision = items.find((item) => item.snippet.label === "decision");
+
+    expect(items).toHaveLength(SNIPPETS.length);
+    expect(process?.heading).toBe("process - Flowchart process (2x)");
+    expect(process?.scaledAscii).toContain('"PROCESS"');
+    expect(process?.scaledAscii.split("\n").length).toBeGreaterThan(1);
+    expect(decision?.scaledAscii).toContain('"one"');
+    expect(decision?.scaledAscii).toContain("/");
+    expect(decision?.scaledAscii).toContain("\\");
   });
 });

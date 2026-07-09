@@ -4,8 +4,9 @@ import styles from "#asciiflow/client/app.module.css";
 import {
   Controller,
   InputController,
+  isEditableTarget,
 } from "#asciiflow/client/controller";
-import { Toolbar, usePanel } from "#asciiflow/client/toolbar";
+import { Toolbar, setActivePanel, usePanel } from "#asciiflow/client/toolbar";
 import { StatusBar } from "#asciiflow/client/StatusBar";
 import { Workspace } from "#asciiflow/client/Workspace";
 import { SnippetsPanel } from "#asciiflow/client/SnippetsPanel";
@@ -22,12 +23,14 @@ import {
   blockReviewDrawingName,
   buildBlockReviewLayer,
 } from "#asciiflow/client/block_review";
+import { BlockReviewInspector } from "#asciiflow/client/BlockReviewInspector";
 
 import { HashRouter, Route, useParams } from "react-router-dom";
 import * as ReactDOM from "react-dom";
 import { Vector } from "#asciiflow/client/vector";
 import { layerToText, textToLayer } from "#asciiflow/client/text_utils";
 import { CHAR_PIXELS_H, CHAR_PIXELS_V } from "#asciiflow/client/constants";
+import { getCanvasViewport } from "#asciiflow/client/canvas_viewport";
 
 const controller = new Controller();
 const inputController = new InputController(controller);
@@ -70,6 +73,25 @@ export interface IRouteProps {
   reviewScale?: string;
 }
 
+function BlockReviewInspectorRoute() {
+  const { reviewScale } = useParams<IRouteProps>();
+  return <BlockReviewInspector scale={Number(reviewScale || "2")} />;
+}
+
+function focusReviewCanvas(): void {
+  const canvas = store.currentCanvas;
+  const zoom = 1;
+  const viewport = getCanvasViewport();
+  const marginX = 32;
+  const marginY = 56;
+
+  canvas.setZoom(zoom);
+  canvas.setOffset(new Vector(
+    viewport.width / 2 / zoom - marginX,
+    viewport.height / 2 / zoom - marginY
+  ));
+}
+
 export const App = () => {
   const routeProps = useParams<IRouteProps>();
   const themeMode = useAppStore((s) => s.themeMode);
@@ -79,11 +101,12 @@ export const App = () => {
   React.useEffect(() => {
     if (routeProps.reviewScale !== undefined) {
       const scale = Number(routeProps.reviewScale || "3");
+      setActivePanel(null);
       store.setRoute(DrawingId.local(blockReviewDrawingName(scale)));
       store.currentCanvas.committed = buildBlockReviewLayer(scale);
       store.currentCanvas.clearScratch();
       store.setToolMode(ToolMode.SELECT);
-      window.setTimeout(() => store.fitDiagram(), 0);
+      window.setTimeout(focusReviewCanvas, 0);
       return;
     }
     if (routeProps.encoded) {
@@ -126,6 +149,9 @@ async function render() {
   ReactDOM.render(
     <HashRouter>
       <Route exact path="/" component={App} />
+      <Route exact path="/review/block/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
+      <Route exact path="/review/blocks/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
+      <Route exact path="/review/block/:reviewScale?" component={App} />
       <Route exact path="/review/blocks/:reviewScale?" component={App} />
       <Route path="/local/:local" component={App} />
       <Route path="/share/:share" component={App} />
@@ -157,6 +183,9 @@ function ensureStableDomHandlers(win: AsciiflowWindow) {
     win.__asciiflowOnWheel = (e) =>
       win.__asciiflowHandlerHost!.inputController.handleWheel(e);
     win.__asciiflowOnCopy = (e) => {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
       if (store.selectTool.selectBox) {
         e.preventDefault();
         const copiedText = layerToText(
@@ -167,6 +196,9 @@ function ensureStableDomHandlers(win: AsciiflowWindow) {
       }
     };
     win.__asciiflowOnCut = (e) => {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
       if (store.selectTool.selectBox) {
         e.preventDefault();
         const copiedText = layerToText(
@@ -175,9 +207,17 @@ function ensureStableDomHandlers(win: AsciiflowWindow) {
         );
         e.clipboardData!.setData("text/plain", copiedText);
         store.selectTool.cutSelection();
+        return;
+      }
+      if (store.toolMode() === ToolMode.RAW) {
+        e.preventDefault();
+        e.clipboardData!.setData("text/plain", store.rawTool.cutCurrentLine());
       }
     };
     win.__asciiflowOnPaste = (e) => {
+      if (isEditableTarget(e.target)) {
+        return;
+      }
       e.preventDefault();
       const clipboardText = e.clipboardData!.getData("text");
       const center = canvasCenter();
@@ -214,8 +254,8 @@ function installGlobalHandlers() {
     return;
   }
 
-  root.addEventListener("keydown", win.__asciiflowOnKeyDown!);
-  root.addEventListener("keyup", win.__asciiflowOnKeyUp!);
+  document.addEventListener("keydown", win.__asciiflowOnKeyDown!);
+  document.addEventListener("keyup", win.__asciiflowOnKeyUp!);
   // Register wheel handler with { passive: false } so preventDefault() can
   // suppress browser page zoom on Ctrl+scroll / pinch-to-zoom.
   root.addEventListener("wheel", win.__asciiflowOnWheel!, { passive: false });
@@ -230,8 +270,8 @@ function installGlobalHandlers() {
       if (!host.installed) {
         return;
       }
-      root.removeEventListener("keydown", win.__asciiflowOnKeyDown!);
-      root.removeEventListener("keyup", win.__asciiflowOnKeyUp!);
+      document.removeEventListener("keydown", win.__asciiflowOnKeyDown!);
+      document.removeEventListener("keyup", win.__asciiflowOnKeyUp!);
       root.removeEventListener("wheel", win.__asciiflowOnWheel!);
       document.removeEventListener("copy", win.__asciiflowOnCopy!);
       document.removeEventListener("cut", win.__asciiflowOnCut!);
