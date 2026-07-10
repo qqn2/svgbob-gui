@@ -7,9 +7,13 @@ import {
 import {
   BlockReviewLedger,
   BlockReviewStatus,
+  applyAutomatedReview,
+  applyReviewPrefill,
   emptyReviewRecord,
   normalizeReviewLedger,
   reviewLedgerCsv,
+  reviewAuditKey,
+  reviewPrefillKey,
   reviewStatusLabel,
   reviewStorageKey,
 } from "#asciiflow/client/block_review_ledger";
@@ -36,11 +40,21 @@ function scaleHref(scale: number): string {
   return `#/review/blocks/${scale}/inspect`;
 }
 
-function loadLedger(scale: number): BlockReviewLedger {
+function loadLedger(scale: number, labels: string[]): BlockReviewLedger {
   try {
-    return normalizeReviewLedger(
+    let ledger = normalizeReviewLedger(
       JSON.parse(localStorage.getItem(reviewStorageKey(scale)) ?? "{}")
     );
+    if (!localStorage.getItem(reviewPrefillKey(scale))) {
+      localStorage.setItem(reviewPrefillKey(scale), "done");
+      ledger = applyReviewPrefill(scale, ledger);
+    }
+    if (!localStorage.getItem(reviewAuditKey(scale))) {
+      localStorage.setItem(reviewAuditKey(scale), "done");
+      ledger = applyAutomatedReview(labels, ledger);
+    }
+
+    return ledger;
   } catch {
     return {};
   }
@@ -61,16 +75,22 @@ export function BlockReviewInspector({ scale }: BlockReviewInspectorProps) {
   const [query, setQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | BlockReviewStatus>("all");
   const [themeMode] = React.useState<ThemeMode>(loadThemeMode);
-  const [ledger, setLedger] = React.useState<BlockReviewLedger>(() => loadLedger(reviewScale));
   const items = React.useMemo(
     () => buildBlockReviewItems(reviewScale),
     [reviewScale]
   );
+  const labels = React.useMemo(
+    () => items.map((item) => item.snippet.label),
+    [items]
+  );
+  const [ledger, setLedger] = React.useState<BlockReviewLedger>(
+    () => loadLedger(reviewScale, labels)
+  );
 
   React.useEffect(() => {
-    setLedger(loadLedger(reviewScale));
+    setLedger(loadLedger(reviewScale, labels));
     setStatusFilter("all");
-  }, [reviewScale]);
+  }, [labels, reviewScale]);
 
   React.useEffect(() => {
     localStorage.setItem(reviewStorageKey(reviewScale), JSON.stringify(ledger));

@@ -187,8 +187,10 @@ export const SNIPPETS: Snippet[] = [
     text: asciiDiagram`
       +--------.
       | "DOC"  |
+      |        |
       |      .-'
-      '------'
+      |     /
+      '----'
     `,
   },
   {
@@ -205,9 +207,11 @@ export const SNIPPETS: Snippet[] = [
     label: "cloud",
     title: "Cloud / external service",
     text: asciiDiagram`
-        .--. .--.
-      (  "CLOUD" )
-       '--' '--'
+             .-.
+          .-+   |
+      .--+       '--.
+      | "CLOUD"     |
+      '-------------'
     `,
   },
   {
@@ -247,11 +251,13 @@ export const SNIPPETS: Snippet[] = [
     label: "state tree",
     title: "State / branch tree",
     text: asciiDiagram`
-             ("0")
-            /     \
-          ("1")   ("2")
-          /    \      \
-        ("3") ("4")   ("5")
+              ("0")
+             /     \
+            /       \
+         ("1")       ("2")
+          /  \         \
+         /    \         \
+      ("3")  ("4")     ("5")
     `,
   },
   {

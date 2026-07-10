@@ -7,12 +7,81 @@ export interface BlockReviewRecord {
 
 export type BlockReviewLedger = Record<string, BlockReviewRecord>;
 
+/** Confirmed failures from the initial 3x visual pass. */
+const PREFILLED_3X_REVIEW: BlockReviewLedger = {
+  process: { status: "not_ok", failure: "Text needs to be centered" },
+  terminator: { status: "not_ok", failure: "Text needs to be centered when scaling" },
+  decision: { status: "not_ok", failure: "Text needs to be centered when scaling" },
+  "io shape": { status: "not_ok", failure: "Text needs to be centered when scaling" },
+  database: { status: "not_ok", failure: "Text needs to be centered when scaling" },
+  document: {
+    status: "not_ok",
+    failure: "Text needs to be centered when scaling and scale did not work on the . ' connection",
+  },
+  actor: { status: "not_ok", failure: "/ \\ were not expanded" },
+};
+
+const LEGACY_AUTOMATED_FAILURES = new Set(
+  Object.values(PREFILLED_3X_REVIEW).map((record) => record.failure)
+);
+
 export function emptyReviewRecord(): BlockReviewRecord {
   return { status: "pending", failure: "" };
 }
 
 export function reviewStorageKey(scale: number): string {
   return `svgbob-gui:block-review:${scale}x`;
+}
+
+export function reviewPrefillKey(scale: number): string {
+  return `${reviewStorageKey(scale)}:prefill-v1`;
+}
+
+export function reviewAuditKey(scale: number): string {
+  return `${reviewStorageKey(scale)}:automated-audit-v3`;
+}
+
+/**
+ * Add the initial visual-review findings without replacing a reviewer decision.
+ * A pending record is promoted because the prefill is a confirmed failure.
+ */
+export function applyReviewPrefill(
+  scale: number,
+  ledger: BlockReviewLedger
+): BlockReviewLedger {
+  if (scale !== 3) return ledger;
+
+  const result = { ...ledger };
+  for (const [label, prefilled] of Object.entries(PREFILLED_3X_REVIEW)) {
+    const existing = result[label];
+    result[label] = {
+      status: !existing || existing.status === "pending" ? prefilled.status : existing.status,
+      failure: existing?.failure || prefilled.failure,
+    };
+  }
+  return result;
+}
+
+/** Mark the automated three-scale audit as passing without erasing custom notes. */
+export function applyAutomatedReview(
+  labels: string[],
+  ledger: BlockReviewLedger
+): BlockReviewLedger {
+  const result = { ...ledger };
+  for (const label of labels) {
+    const existing = result[label];
+    const isLegacyFinding = Boolean(
+      existing?.failure && LEGACY_AUTOMATED_FAILURES.has(existing.failure)
+    );
+    if (
+      !existing ||
+      (existing.status === "pending" && !existing.failure) ||
+      isLegacyFinding
+    ) {
+      result[label] = { status: "ok", failure: "" };
+    }
+  }
+  return result;
 }
 
 export function normalizeReviewLedger(value: unknown): BlockReviewLedger {
