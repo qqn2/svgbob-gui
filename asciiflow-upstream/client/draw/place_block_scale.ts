@@ -13,20 +13,43 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
   const textPositionKeys = new Set(
     textRuns.flatMap((run) => run.positions.map((position) => position.toString()))
   );
-  const compressions = bridgedTextRunCompressions(layer, textRuns, s);
+  const compressions = [
+    ...bridgedTextRunCompressions(layer, textRuns, s),
+    ...curvedRightEdgeExpansions(layer, s),
+  ];
   const textRunOffsets = textRunScaledOffsets(layer, textRuns, compressions, s);
   for (const [position, value] of layer.entries()) {
     const textOffset = textRunOffsets.get(position.toString());
     const anchor = textOffset != null
       ? new Vector(textOffset.x, textOffset.y)
       : new Vector(position.x * s - compressionBefore(compressions, position), position.y * s);
-    scaled.set(anchor, value);
+    const right = layer.get(position.add(Direction.RIGHT));
+    const rightArrowContact = isRightArrowhead(value) && isArrowContactBoundary(right);
+    const upArrowContact = isUpArrowhead(value) && isArrowContactBoundary(
+      layer.get(position.add(Direction.UP))
+    );
+
+    if (rightArrowContact) {
+      const fill = value === ">" ? "-" : UNICODE.lineHorizontal;
+      for (let i = 0; i < s - 1; i++) {
+        scaled.set(anchor.add(new Vector(i, 0)), fill);
+      }
+      scaled.set(anchor.add(new Vector(s - 1, 0)), value);
+    } else if (upArrowContact) {
+      const fill = value === "^" ? "|" : UNICODE.lineVertical;
+      for (let i = 0; i < s - 1; i++) {
+        scaled.set(anchor.add(new Vector(0, -i)), fill);
+      }
+      scaled.set(anchor.add(new Vector(0, -(s - 1))), value);
+    } else {
+      scaled.set(anchor, value);
+    }
 
     const isTextPosition = (
       textPositionKeys.has(position.toString()) ||
       isInsideQuotedText(layer, position)
     );
-    if (!isTextPosition && shouldFillRight(layer, position, value)) {
+    if (!rightArrowContact && !isTextPosition && shouldFillRight(layer, position, value)) {
       const fill = rightFill(value, layer.get(position.add(Direction.RIGHT)));
       for (let i = 1; i < s; i++) {
         scaled.set(anchor.add(new Vector(i, 0)), fill);
@@ -35,7 +58,16 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
     if (shouldFillDown(layer, position, value)) {
       const fill = downFill(value, layer.get(position.add(Direction.DOWN)));
       for (let i = 1; i < s; i++) {
-        scaled.set(anchor.add(new Vector(0, i)), fill);
+        if (isTextPosition) {
+          const downPosition = position.add(Direction.DOWN);
+          const downAnchor = new Vector(
+            downPosition.x * s - compressionBefore(compressions, downPosition),
+            downPosition.y * s
+          );
+          scaled.set(downAnchor.add(new Vector(0, -i)), fill);
+        } else {
+          scaled.set(anchor.add(new Vector(0, i)), fill);
+        }
       }
     }
     if ((!isTextPosition || isDiagramWrapper(value)) && shouldFillDownRight(layer, position, value)) {
@@ -48,10 +80,20 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
         scaled.set(anchor.add(new Vector(-i, i)), "/");
       }
     }
+    if (value === "." && curvedRightEdgeBelow(layer, position)) {
+      for (let i = 1; i < s; i++) {
+        scaled.set(anchor.add(new Vector(i, i)), "\\");
+      }
+    }
+    if (isCurvedRightEdge(layer, position)) {
+      for (let i = 1; i < s; i++) {
+        scaled.set(anchor.add(new Vector(-i, i)), "/");
+      }
+    }
     if (
       !isTextPosition &&
       value === "/" &&
-      layer.get(position.add(new Vector(1, -1))) !== "/"
+      !isDiagonalEndpoint(layer.get(position.add(new Vector(1, -1))))
     ) {
       for (let i = 1; i < s; i++) {
         scaled.set(anchor.add(new Vector(i, -i)), "/");
@@ -60,7 +102,7 @@ export function scalePlacementLayer(layer: Layer, scale: number): Layer {
     if (
       !isTextPosition &&
       value === "\\" &&
-      layer.get(position.add(new Vector(-1, -1))) !== "\\"
+      !isDiagonalEndpoint(layer.get(position.add(new Vector(-1, -1))))
     ) {
       for (let i = 1; i < s; i++) {
         scaled.set(anchor.add(new Vector(-i, -i)), "\\");
@@ -185,6 +227,7 @@ function bridgedTextRunCompressions(
   return runs
     .filter((run) => {
       return (
+        !isParenthesizedTextRun(layer, run) &&
         isHorizontalConnector(layer.get(run.start.add(Direction.LEFT))) &&
         isHorizontalConnector(layer.get(run.end.add(Direction.RIGHT)))
       );
@@ -194,6 +237,21 @@ function bridgedTextRunCompressions(
       fromX: run.end.x + 1,
       delta: (run.end.x - run.start.x + 1) * (scale - 1),
     }));
+}
+
+function curvedRightEdgeExpansions(layer: Layer, scale: number): Compression[] {
+  const expansions: Compression[] = [];
+  for (const [position] of layer.entries()) {
+    if (!isCurvedRightEdge(layer, position) || curvedRightEdgeOffset(layer, position) !== 0) {
+      continue;
+    }
+    expansions.push({
+      y: position.y,
+      fromX: position.x,
+      delta: -(scale - 1),
+    });
+  }
+  return expansions;
 }
 
 function textRunScaledOffsets(
@@ -256,9 +314,14 @@ function scaledX(
 
 function isBridgedTextRun(layer: Layer, run: TextRun): boolean {
   return (
+    !isParenthesizedTextRun(layer, run) &&
     isHorizontalConnector(layer.get(run.start.add(Direction.LEFT))) &&
     isHorizontalConnector(layer.get(run.end.add(Direction.RIGHT)))
   );
+}
+
+function isParenthesizedTextRun(layer: Layer, run: TextRun): boolean {
+  return layer.get(run.start) === "(" && layer.get(run.end) === ")";
 }
 
 function uniqueEnclosingBounds(
@@ -371,7 +434,51 @@ function shouldFillDown(layer: Layer, position: Vector, value: string): boolean 
     connects(down, Direction.UP) ||
     (isShapeEndpoint(value) && isAsciiVertical(down)) ||
     (isAsciiVertical(value) && isShapeEndpoint(down)) ||
-    (isAsciiVertical(value) && isAsciiVertical(down))
+    (isAsciiVertical(value) && isAsciiVertical(down)) ||
+    (value === "_" && (down === "|" || down === ":"))
+  );
+}
+
+function isRightArrowhead(value: string): boolean {
+  return value === ">" || value === "►";
+}
+
+function isUpArrowhead(value: string): boolean {
+  return value === "^" || value === "▲";
+}
+
+function isArrowContactBoundary(value: string): boolean {
+  return (
+    isShapeEndpoint(value) ||
+    isAsciiVertical(value) ||
+    isAsciiHorizontal(value) ||
+    (Boolean(value) && (
+      (connects(value, Direction.UP) && connects(value, Direction.DOWN)) ||
+      (connects(value, Direction.LEFT) && connects(value, Direction.RIGHT))
+    ))
+  );
+}
+
+function isCurvedRightEdge(layer: Layer, position: Vector): boolean {
+  return layer.get(position) === ")" && curvedRightEdgeOffset(layer, position) != null;
+}
+
+function curvedRightEdgeOffset(layer: Layer, position: Vector): number | null {
+  for (const offset of [0, -1]) {
+    if (
+      layer.get(position.add(new Vector(offset, -1))) === "." &&
+      layer.get(position.add(new Vector(offset, 1))) === "'"
+    ) {
+      return offset;
+    }
+  }
+  return null;
+}
+
+function curvedRightEdgeBelow(layer: Layer, position: Vector): boolean {
+  return (
+    isCurvedRightEdge(layer, position.add(Direction.DOWN)) ||
+    isCurvedRightEdge(layer, position.add(new Vector(1, 1)))
   );
 }
 
@@ -421,7 +528,7 @@ function isDiagramWrapper(value: string): boolean {
 }
 
 function isAsciiVertical(value: string): boolean {
-  return value === "+" || value === "|" || value === "^" || value === "v";
+  return value === "+" || value === "|" || value === ":" || value === "^" || value === "v";
 }
 
 function isText(value: string): boolean {
@@ -436,6 +543,7 @@ function rightFill(value: string, right: string): string {
 }
 
 function downFill(value: string, down: string): string {
+  if (value === ":" || down === ":") return ":";
   return isAsciiVertical(value) || isAsciiVertical(down)
     ? "|"
     : UNICODE.lineVertical;

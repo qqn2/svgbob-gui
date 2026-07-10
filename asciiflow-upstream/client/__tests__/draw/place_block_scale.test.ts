@@ -82,6 +82,84 @@ describe("place_block_scale", () => {
     expect(layerToText(scaled)).toBe('------------> "OUT"');
   });
 
+  it("keeps the expanded sequence B lifeline in one column", () => {
+    const snippet = SNIPPETS.find((candidate) => candidate.label === "sequence");
+    if (!snippet) throw new Error("sequence snippet missing");
+    const lines = layerToText(
+      scalePlacementLayer(textToLayer(resolveSnippetText(snippet)), 3)
+    ).split("\n");
+    const rightColumns = lines.slice(1).flatMap((line) => {
+      const columns = [...line].flatMap((char, index) => (
+        ["|", "+", "│", "┤", "┘"].includes(char) ? [index] : []
+      ));
+      return columns.length > 0 ? [Math.max(...columns)] : [];
+    });
+
+    expect(new Set(rightColumns).size).toBe(1);
+  });
+
+  it("aligns the railroad count box source columns", () => {
+    const snippet = SNIPPETS.find((candidate) => candidate.label === "railroad");
+    if (!snippet) throw new Error("railroad snippet missing");
+    const source = resolveSnippetText(snippet);
+    const top = source.split("\n").find((line) => line.includes("(\"sep\")"));
+    const count = source.split("\n").find((line) => line.includes("\"count\""));
+    if (!top || !count) throw new Error("railroad box rows missing");
+    const beforeCount = count.slice(0, count.indexOf("\"count\""));
+    const countLeft = Math.max(beforeCount.lastIndexOf("|"), beforeCount.lastIndexOf("│"));
+
+    const sepEnd = top.indexOf("(\"sep\")") + "(\"sep\")".length;
+    expect(top.indexOf("┬", sepEnd)).toBe(countLeft);
+  });
+
+  it.each([2, 3])("keeps a right arrowhead adjacent to its target at %ix", (scale) => {
+    const scaled = layerToText(scalePlacementLayer(textToLayer("-->|"), scale));
+
+    expect(scaled).toBe(`${"-".repeat(3 * scale - 1)}>|`);
+  });
+
+  it("keeps a right arrowhead adjacent to a branching junction", () => {
+    const line = layerToText(scalePlacementLayer(textToLayer('"src0" -->+────.'), 2));
+    const arrowIndex = line.indexOf(">");
+
+    expect(line[arrowIndex + 1]).toBe("+");
+  });
+
+  it.each([2, 3])("keeps an up arrowhead adjacent to its target at %ix", (scale) => {
+    const scaled = layerToText(scalePlacementLayer(textToLayer("---\n ^\n |"), scale));
+    const lines = scaled.split("\n");
+
+    expect(lines[1]).toContain("^");
+    expect(lines.slice(2).every((line) => line.includes("|"))).toBe(true);
+  });
+
+  it("interpolates a curved right edge at 2x", () => {
+    const scaled = scalePlacementLayer(textToLayer(".\n)\n'"), 2);
+
+    expect(layerToText(scaled).split("\n").map((line) => line.trimEnd())).toEqual([
+      ".",
+      " \\",
+      " )",
+      "/",
+      "'",
+    ]);
+  });
+
+  it("interpolates a curved right edge whose tip is offset", () => {
+    const scaled = scalePlacementLayer(textToLayer(". \n )\n' "), 2);
+
+    expect(scaled.get(new Vector(1, 1))).toBe("\\");
+    expect(scaled.get(new Vector(2, 2))).toBe(")");
+    expect(scaled.get(new Vector(1, 3))).toBe("/");
+  });
+
+  it("connects a triangle base to its vertical continuation", () => {
+    const scaled = scalePlacementLayer(textToLayer("/_\\\n |"), 2);
+
+    expect(scaled.get(new Vector(2, 1))).toBe("|");
+    expect(scaled.get(new Vector(2, 2))).toBe("|");
+  });
+
   it("does not treat label letters as connector arrows", () => {
     const scaled = scalePlacementLayer(textToLayer("| Slave |\n| DATA[31:0] |"), 3);
     const text = layerToText(scaled);
