@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
-    "check": "npm run typecheck && npm run test && npm run build"
+    "security-check": "node scripts/security-render-check.mjs",
+    "check": "npm run typecheck && npm run test && npm run security-check && npm run build"
   },
   "dependencies": {
     "js-base64": "^3.7.7",
@@ -19,7 +20,6 @@
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
     "svgbob-wasm": "^1.0.0",
-    "uuid": "^8.3.2",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
@@ -27,13 +27,11 @@
     "@types/react": "^16.14.56",
     "@types/react-dom": "^16.9.24",
     "@types/react-router-dom": "^5.3.3",
-    "@types/uuid": "^8.3.4",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "typescript": "^5",
-    "vite": "^5.4.21",
-    "vite-plugin-top-level-await": "^1.6.0",
-    "vite-plugin-wasm": "^3.6.0",
+    "vite": "^7.3.6",
     "vite-node": "^3.2.4",
+    "vite-plugin-wasm": "^3.6.0",
     "vitest": "^3.0.5"
   }
 }

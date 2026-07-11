@@ -2,6 +2,13 @@ node_modules/
 asciiflow-upstream/node_modules/
 dist/
 *.local
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.vscode/
+dev-server*.log
 
 # Cursor agent session notes (local only)
 agent.md

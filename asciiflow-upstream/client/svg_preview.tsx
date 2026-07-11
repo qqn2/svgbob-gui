@@ -167,8 +167,9 @@ export function SvgPreview() {
       observer.observe(element);
       return () => observer.disconnect();
     }
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const eventTarget = window as unknown as EventTarget;
+    eventTarget.addEventListener("resize", measure);
+    return () => eventTarget.removeEventListener("resize", measure);
   }, []);
 
   const showError = initError ?? renderError;
