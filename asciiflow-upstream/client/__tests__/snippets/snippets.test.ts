@@ -52,6 +52,10 @@ describe("snippets", () => {
       "state tree",
       "binary tree",
       "plot axes",
+      "and gate",
+      "nand gate",
+      "or gate",
+      "xor gate",
     ]);
     for (const snippet of SNIPPETS) {
       if (textShapeLabels.has(snippet.label)) {
@@ -94,6 +98,10 @@ describe("snippets", () => {
         "network topo",
         "uml inherit",
         "logic cone",
+        "and gate",
+        "nand gate",
+        "or gate",
+        "xor gate",
         "radial fanout",
         "clk tree",
         "rst tree",
@@ -114,6 +122,10 @@ describe("snippets", () => {
     expect(SNIPPET_DISPLAY_LABELS["arr lbl"]).toBe("Labeled arrow");
     expect(SNIPPET_DISPLAY_LABELS["radial fanout"]).toBe("Radial fanout");
     expect(SNIPPET_DISPLAY_LABELS["logic cone"]).toBe("Logic cone");
+    expect(SNIPPET_DISPLAY_LABELS["and gate"]).toBe("AND gate");
+    expect(SNIPPET_DISPLAY_LABELS["nand gate"]).toBe("NAND gate");
+    expect(SNIPPET_DISPLAY_LABELS["or gate"]).toBe("OR gate");
+    expect(SNIPPET_DISPLAY_LABELS["xor gate"]).toBe("XOR gate");
     expect(SNIPPET_DISPLAY_LABELS["network topo"]).toBe("Network topology");
     expect(SNIPPET_DISPLAY_LABELS["uml inherit"]).toBe("UML inheritance");
     expect(SNIPPET_DISPLAY_LABELS["clk tree"]).toBe("Clock tree");
