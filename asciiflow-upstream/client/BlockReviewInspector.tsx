@@ -17,8 +17,7 @@ import {
   reviewStatusLabel,
   reviewStorageKey,
 } from "#asciiflow/client/block_review_ledger";
-import { renderSync } from "#asciiflow/client/renderer";
-import { expandSvgToFitText } from "#asciiflow/client/review_svg";
+import { renderAsciiToSvg } from "#asciiflow/client/export_engine";
 import { ThemeMode, loadThemeMode } from "#asciiflow/client/theme_settings";
 import styles from "#asciiflow/client/block_review_inspector.module.css";
 
@@ -28,7 +27,7 @@ interface BlockReviewInspectorProps {
 
 function renderSvg(ascii: string): { svg: string; error: string | null } {
   try {
-    return { svg: expandSvgToFitText(renderSync(ascii)), error: null };
+    return { svg: renderAsciiToSvg(ascii), error: null };
   } catch (error) {
     return {
       svg: "",

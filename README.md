@@ -16,6 +16,12 @@ Built for **one engineer at a desk**: sketch a block diagram, copy ASCII into RT
 | Copy ASCII / SVG, download `.svg`, share URL | Team block libraries, VCD import |
 | Per-drawing `localStorage` persistence (AsciiFlow) | |
 
+### Data and privacy
+
+The deployed app remains client-only: diagrams are stored in this browser's `localStorage` and are not uploaded to an application server. Drawings do not synchronize between browsers or devices. Clearing site data removes local drawings, so use **Files -> backup all** to download a JSON backup and **restore backup** to recover it later.
+
+Share links embed the diagram in the URL fragment. The fragment is not sent to the hosting server, but the complete link can remain in browser or clipboard history and can be read by anyone who receives it. Do not create or distribute a share link for material that should remain private.
+
 ## Quick start
 
 From the project folder:
@@ -29,9 +35,11 @@ To ship a static copy: `npm run build` (creates `dist/`). Try it locally with `n
 
 Before sharing changes: `npm run check` (typecheck + tests + build).
 
+Cloudflare Pages settings: production branch `master`, build command `npm run check`, output directory `dist`, and Node.js 22. The checked-in `_headers` file supplies the production CSP and browser security headers.
+
 ### Developer review routes
 
-Hidden block-library review sheets are available while the Vite dev server is running:
+Hidden block-library review sheets are available only while the Vite dev server is running; production builds do not register these routes:
 
 - `http://127.0.0.1:5173/#/review/blocks/1` - stamp every reusable block at 1x scale
 - `http://127.0.0.1:5173/#/review/blocks/2` - stamp every reusable block at 2x scale

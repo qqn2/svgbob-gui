@@ -31,6 +31,8 @@ import { Vector } from "#asciiflow/client/vector";
 import { layerToText, textToLayer } from "#asciiflow/client/text_utils";
 import { CHAR_PIXELS_H, CHAR_PIXELS_V } from "#asciiflow/client/constants";
 import { getCanvasViewport } from "#asciiflow/client/canvas_viewport";
+import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
+import { STORAGE_ERROR_EVENT } from "#asciiflow/client/storage_health";
 
 const controller = new Controller();
 const inputController = new InputController(controller);
@@ -92,13 +94,30 @@ function focusReviewCanvas(): void {
   ));
 }
 
+function decodeRouteValue(value: string): string | null {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+}
+
 export const App = () => {
   const routeProps = useParams<IRouteProps>();
   const themeMode = useAppStore((s) => s.themeMode);
   const [panel] = usePanel();
+  const [routeError, setRouteError] = React.useState("");
+  const [storageError, setStorageError] = React.useState(false);
+
+  React.useEffect(() => {
+    const onStorageError = () => setStorageError(true);
+    window.addEventListener(STORAGE_ERROR_EVENT, onStorageError);
+    return () => window.removeEventListener(STORAGE_ERROR_EVENT, onStorageError);
+  }, []);
 
   // Sync route params into the store.
   React.useEffect(() => {
+    setRouteError("");
     if (routeProps.reviewScale !== undefined) {
       const scale = Number(routeProps.reviewScale || "3");
       setActivePanel(null);
@@ -111,13 +130,30 @@ export const App = () => {
     }
     if (routeProps.encoded) {
       store.setRoute(DrawingId.local("bob-import"));
-      loadFromBobRoute(decodeURIComponent(routeProps.encoded));
+      const encoded = decodeRouteValue(routeProps.encoded);
+      if (!encoded || !loadFromBobRoute(encoded)) {
+        setRouteError("This diagram link is invalid or too large.");
+      }
+      return;
+    }
+    if (routeProps.share) {
+      const shareSpec = decodeRouteValue(routeProps.share);
+      if (!shareSpec) {
+        store.setRoute(DrawingId.local(null));
+        setRouteError("This shared drawing is invalid or too large.");
+        return;
+      }
+      try {
+        new DrawingStringifier().deserialize(shareSpec);
+        store.setRoute(DrawingId.share(shareSpec));
+      } catch {
+        store.setRoute(DrawingId.local(null));
+        setRouteError("This shared drawing is invalid or too large.");
+      }
       return;
     }
     store.setRoute(
-      routeProps.share
-        ? DrawingId.share(decodeURIComponent(routeProps.share))
-        : DrawingId.local(routeProps.local || null)
+      DrawingId.local(routeProps.local || null)
     );
     if (!routeProps.share && !routeProps.local) {
       seedDefaultDiagramIfEmpty();
@@ -132,6 +168,16 @@ export const App = () => {
   return (
     <div className={styles.app} data-theme={themeMode}>
       <Toolbar />
+      {routeError ? (
+        <div className={styles.routeError} role="alert">
+          {routeError} Your existing local drawings were not changed.
+        </div>
+      ) : null}
+      {storageError ? (
+        <div className={styles.routeError} role="alert">
+          Browser storage is unavailable or full. Your current drawing remains open, but new changes may not survive a reload. Export a backup from Files.
+        </div>
+      ) : null}
       <div className={styles.workbench}>
         {panel === "snippets" && (
           <aside className={styles.blocksSidebar} aria-label="Blocks library">
@@ -146,13 +192,18 @@ export const App = () => {
 };
 
 async function render() {
-  ReactDOM.render(
-    <HashRouter>
-      <Route exact path="/" component={App} />
+  const reviewRoutes = import.meta.env.DEV ? (
+    <>
       <Route exact path="/review/block/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
       <Route exact path="/review/blocks/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
       <Route exact path="/review/block/:reviewScale?" component={App} />
       <Route exact path="/review/blocks/:reviewScale?" component={App} />
+    </>
+  ) : null;
+  ReactDOM.render(
+    <HashRouter>
+      <Route exact path="/" component={App} />
+      {reviewRoutes}
       <Route path="/local/:local" component={App} />
       <Route path="/share/:share" component={App} />
       <Route path="/bob/:encoded" component={App} />

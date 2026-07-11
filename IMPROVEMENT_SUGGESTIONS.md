@@ -6,9 +6,9 @@ What follows is the remaining backlog — items not done, or only started.
 
 ## High Impact
 
-### Block Gallery Test Page
+### Block Gallery Test Page (completed)
 
-Create a small internal page that renders every block template at 1x, 2x, and 3x scale. This would make it much easier to visually review templates like mux, flip-flop, SRAM, bus, FIFO, reset sync, and scan blocks after scaling changes.
+The development-only review and inspector routes now render every block template at 1x, 2x, and 3x with ASCII and SVG side by side, searchable cards, and an exportable review ledger.
 
 Recommended checks:
 

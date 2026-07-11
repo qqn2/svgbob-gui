@@ -19,4 +19,8 @@ describe("svgbob_storage", () => {
   it("returns null for invalid encoded input", () => {
     expect(decodeAsciiFromUrl("not!!!valid")).toBeNull();
   });
+
+  it("rejects oversized inbound payloads", () => {
+    expect(decodeAsciiFromUrl("a".repeat(9000))).toBeNull();
+  });
 });

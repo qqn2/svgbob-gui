@@ -8,6 +8,7 @@ import { DrawingId, storageKey } from "#asciiflow/client/store";
 import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
 import { ArrayStringifier, IStringifier, JSONStringifier } from "#asciiflow/common/stringifiers";
 import { IVector, Vector } from "#asciiflow/client/vector";
+import { writeLocalStorage } from "#asciiflow/client/storage_health";
 
 // localStorage always stores offsets in the original pixel format (H=9, V=16).
 // We convert to/from current pixel sizes on read/write so existing data just works.
@@ -35,7 +36,7 @@ function writePersistent<T>(
   value: T,
   stringifier: IStringifier<T> = new JSONStringifier() as any
 ): void {
-  localStorage.setItem(key, stringifier.serialize(value));
+  writeLocalStorage(key, stringifier.serialize(value));
 }
 
 /**

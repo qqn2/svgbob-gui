@@ -6,7 +6,7 @@ import {
   swatchById,
 } from "#asciiflow/client/lib/svgbob/fill_palette";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
-import { layerToText } from "#asciiflow/client/text_utils";
+import { layerToText, textToLayer } from "#asciiflow/client/text_utils";
 import { ThemeMode } from "#asciiflow/client/theme_settings";
 import { DrawingStringifier } from "#asciiflow/client/store/drawing_stringifier";
 import {
@@ -20,6 +20,10 @@ import styles from "#asciiflow/client/toolbar.module.css";
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useHistory } from "react-router";
+import {
+  parseDrawingBackup,
+  serializeDrawingBackup,
+} from "#asciiflow/client/drawing_backup";
 
 // ---------------------------------------------------------------------------
 // Which panel owns the second row (singleton — only one at a time)
@@ -744,6 +748,46 @@ function FilePanel() {
   const route = useAppStore((s) => s.route);
   const localDrawingIds = useAppStore((s) => s.localDrawingIds);
   const canvasVersion = useAppStore((s) => s.canvasVersion);
+  const importRef = useRef<HTMLInputElement>(null);
+  const [backupMessage, setBackupMessage] = useState("");
+
+  const downloadBackup = () => {
+    const drawings = store.drawings
+      .filter((drawingId) => !drawingId.shareSpec)
+      .map((drawingId) => ({
+        name: drawingId.localId,
+        ascii: layerToText(store.canvas(drawingId).committed),
+      }));
+    const blob = new Blob([serializeDrawingBackup(drawings)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "svgbob-drawings-backup.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    setBackupMessage("Backup downloaded");
+  };
+
+  const restoreBackup = async (file: File) => {
+    try {
+      if (file.size > 5_000_000) {
+        throw new Error("Backup file is too large");
+      }
+      const backup = parseDrawingBackup(await file.text());
+      const ids = backup.drawings
+        .filter((drawing) => drawing.name !== null)
+        .map((drawing) => DrawingId.local(drawing.name));
+      for (const drawing of backup.drawings) {
+        store.canvas(DrawingId.local(drawing.name)).committed = textToLayer(drawing.ascii);
+      }
+      store.setLocalDrawingIds(ids);
+      setBackupMessage(`${backup.drawings.length} drawings restored`);
+    } catch (error) {
+      setBackupMessage(error instanceof Error ? error.message : "Backup restore failed");
+    }
+  };
 
   return (
     <div className={styles.fileList}>
@@ -755,6 +799,22 @@ function FilePanel() {
         />
       ))}
       <NewDrawingRow />
+      <div className={styles.fileRowActions}>
+        <button className={styles.fileRowAction} onClick={downloadBackup}>backup all</button>
+        <button className={styles.fileRowAction} onClick={() => importRef.current?.click()}>restore backup</button>
+        <input
+          ref={importRef}
+          type="file"
+          accept="application/json,.json"
+          hidden
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            if (file) void restoreBackup(file);
+            event.currentTarget.value = "";
+          }}
+        />
+        {backupMessage ? <span>{backupMessage}</span> : null}
+      </div>
     </div>
   );
 }

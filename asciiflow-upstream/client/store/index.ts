@@ -25,6 +25,7 @@ import {
   JSONStringifier,
 } from "#asciiflow/common/stringifiers";
 import { create } from "zustand";
+import { writeLocalStorage } from "#asciiflow/client/storage_health";
 
 export enum ToolMode {
   BOX = 1,
@@ -136,7 +137,7 @@ function writePersistent<T>(
   value: T,
   stringifier: IStringifier<T> = new JSONStringifier() as any
 ): void {
-  localStorage.setItem(key, stringifier.serialize(value));
+  writeLocalStorage(key, stringifier.serialize(value));
 }
 
 // ---------------------------------------------------------------------------

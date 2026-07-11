@@ -9,6 +9,7 @@ import {
   layerToSvgbobText,
   stripFillTags,
 } from "#asciiflow/client/lib/svgbob/svgbob_text";
+import { expandSvgToFitText } from "#asciiflow/client/review_svg";
 
 export { parseSvgSize, scaleSvgMarkup } from "#asciiflow/client/export_svg_utils";
 
@@ -23,7 +24,9 @@ export interface ExportOptions {
 }
 
 export function renderAsciiToSvg(ascii: string): string {
-  return applyFillStylesToSvg(renderSync(stripFillTags(ascii)), ascii);
+  return expandSvgToFitText(
+    applyFillStylesToSvg(renderSync(stripFillTags(ascii)), ascii)
+  );
 }
 
 export function asciiFromLayer(layer: ILayerView): string {
