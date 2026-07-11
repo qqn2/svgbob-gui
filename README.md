@@ -35,6 +35,8 @@ To ship a static copy: `npm run build` (creates `dist/`). Try it locally with `n
 
 Before sharing changes: `npm run check` (typecheck + tests + build).
 
+Before deployment: `npm run test:e2e` builds the production app and runs the critical editing, persistence, block placement, export, backup, and malformed-link flows in Chromium and Firefox. Install the local browser runtimes once with `npx playwright install chromium firefox`.
+
 Cloudflare Pages settings: production branch `master`, build command `npm run check`, output directory `dist`, and Node.js 22. The checked-in `_headers` file supplies the production CSP and browser security headers.
 
 ### Developer review routes
