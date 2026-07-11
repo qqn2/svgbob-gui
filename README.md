@@ -42,6 +42,8 @@ Cloudflare deployment settings:
 - **Workers Builds:** production branch `master`, build command `npm run check`, deploy command `npm run deploy`, and Node.js 22. The checked-in `wrangler.jsonc` deploys `dist` as an assets-only SPA.
 - **Pages Git integration:** production branch `master`, build command `npm run check`, output directory `dist`, Node.js 22, and no deploy command.
 
+The Worker is named `bob`. Its default address is `bob.<account-subdomain>.workers.dev`; change the account-wide subdomain from **Workers & Pages -> select the Worker -> Your subdomain -> Change**. A custom Worker domain must belong to an active Cloudflare DNS zone.
+
 The checked-in `_headers` file supplies the production CSP and browser security headers.
 
 ### Developer review routes

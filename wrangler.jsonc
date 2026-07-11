@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "svgbob-gui",
+  "name": "bob",
   "compatibility_date": "2026-07-11",
   "assets": {
     "directory": "./dist",
