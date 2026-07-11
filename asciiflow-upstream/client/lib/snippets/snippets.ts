@@ -478,6 +478,50 @@ export const SNIPPETS: Snippet[] = [
     `,
   },
   {
+    label: "and gate",
+    title: "AND gate",
+    text: asciiDiagram`
+     "A" ----+------.
+             |       \
+             |        )---- "Y"
+             |       /
+     "B" ----+------'
+    `,
+  },
+  {
+    label: "nand gate",
+    title: "NAND gate",
+    text: asciiDiagram`
+     "A" ----+------.
+             |       \
+             |        )o--- "Y"
+             |       /
+     "B" ----+------'
+    `,
+  },
+  {
+    label: "or gate",
+    title: "OR gate",
+    text: asciiDiagram`
+     "A" -----\------.
+               \      \
+                )      )---- "Y"
+               /      /
+     "B" -----/------'
+    `,
+  },
+  {
+    label: "xor gate",
+    title: "XOR gate",
+    text: asciiDiagram`
+     "A" -----\\------.
+               \\      \
+                ))      )---- "Y"
+               //      /
+     "B" -----//------'
+    `,
+  },
+  {
     label: "IRQ",
     title: "Interrupt OR tree",
     text: asciiDiagram`
