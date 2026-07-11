@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "npm run build && wrangler deploy",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "npm run build && playwright test",
@@ -34,6 +35,7 @@
     "vite": "^7.3.6",
     "vite-node": "^3.2.4",
     "vite-plugin-wasm": "^3.6.0",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "wrangler": "4.110.0"
   }
 }

@@ -37,7 +37,12 @@ Before sharing changes: `npm run check` (typecheck + tests + build).
 
 Before deployment: `npm run test:e2e` builds the production app and runs the critical editing, persistence, block placement, export, backup, and malformed-link flows in Chromium and Firefox. Install the local browser runtimes once with `npx playwright install chromium firefox`.
 
-Cloudflare Pages settings: production branch `master`, build command `npm run check`, output directory `dist`, and Node.js 22. The checked-in `_headers` file supplies the production CSP and browser security headers.
+Cloudflare deployment settings:
+
+- **Workers Builds:** production branch `master`, build command `npm run check`, deploy command `npm run deploy`, and Node.js 22. The checked-in `wrangler.jsonc` deploys `dist` as an assets-only SPA.
+- **Pages Git integration:** production branch `master`, build command `npm run check`, output directory `dist`, Node.js 22, and no deploy command.
+
+The checked-in `_headers` file supplies the production CSP and browser security headers.
 
 ### Developer review routes
 
