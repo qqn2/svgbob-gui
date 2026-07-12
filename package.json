@@ -1,8 +1,16 @@
 {
   "name": "svgbob-gui",
   "version": "0.2.0",
+  "description": "Browser-based ASCII diagram editor with live svgbob SVG rendering.",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qqn2/svgbob-gui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/qqn2/svgbob-gui/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
