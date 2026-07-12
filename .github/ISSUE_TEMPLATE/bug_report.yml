@@ -1,0 +1,47 @@
+name: Bug report
+description: Report reproducible editor, rendering, export, or deployment behavior.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach confidential diagrams or proprietary signal names. Reduce examples to generic ASCII first.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open...
+        2. Select...
+        3. Draw...
+    validations:
+      required: true
+  - type: textarea
+    id: ascii
+    attributes:
+      label: Minimal generic ASCII input
+      render: text
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Firefox 140, Chrome 138, etc.
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Environment
+      options:
+        - Local development
+        - Production deployment
+        - Both
+    validations:
+      required: true
