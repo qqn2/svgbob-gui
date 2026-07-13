@@ -87,6 +87,22 @@ npx playwright install chromium firefox
 See [CONTRIBUTING.md](CONTRIBUTING.md) for project structure, block-review
 routes, and pull-request expectations.
 
+### Block review workspace
+
+The app includes a development-only visual QA workspace for checking every
+reusable block after editing snippets or scaling logic. Start `npm run dev`,
+then open:
+
+- `http://127.0.0.1:5173/#/review/blocks/1/inspect`
+- `http://127.0.0.1:5173/#/review/blocks/2/inspect`
+- `http://127.0.0.1:5173/#/review/blocks/3/inspect`
+
+Each inspector compares the scaled ASCII source with its svgbob render and
+records OK/Not OK notes for CSV export. Remove `/inspect` to place the complete
+block library on the normal canvas at that scale. These routes are deliberately
+excluded from production builds; see [CONTRIBUTING.md](CONTRIBUTING.md) for the
+authoring rules and review checklist.
+
 ## Deployment
 
 The repository supports an assets-only Cloudflare Worker:

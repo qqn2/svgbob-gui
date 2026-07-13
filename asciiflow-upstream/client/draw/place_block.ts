@@ -7,7 +7,7 @@ import {
   layerBBox,
   layerOverlapsCommitted,
   offsetLayer,
-  rotateLayer90CW,
+  rotatePlacementLayer,
   snapAnchor,
 } from "#asciiflow/client/layer_placement";
 import { Layer } from "#asciiflow/client/layer";
@@ -17,10 +17,14 @@ import { Vector } from "#asciiflow/client/vector";
 
 /**
  * Stamp mode for RTL blocks: ghost follows cursor; click to place, Esc to cancel.
- * R rotate 90° · H flip horizontal · V flip vertical
+ * R rotates 90 degrees; H flips horizontally; V flips vertically.
  */
 export class DrawPlaceBlock extends AbstractDrawFunction {
+  private baseTemplate: Layer | null = null;
   private template: Layer | null = null;
+  private rotation = 0;
+  private flippedH = false;
+  private flippedV = false;
   private bbox = null as ReturnType<typeof layerBBox>;
   private lastCursor: Vector | null = null;
   private _overlaps = false;
@@ -41,9 +45,12 @@ export class DrawPlaceBlock extends AbstractDrawFunction {
   begin(text: string, scale = 1): void {
     store.selectTool.cleanup();
     store.currentTool.cleanup();
-    this.template = scalePlacementLayer(textToLayer(text, new Vector(0, 0)), scale);
-    this.bbox = layerBBox(this.template);
+    this.baseTemplate = scalePlacementLayer(textToLayer(text, new Vector(0, 0)), scale);
+    this.rotation = 0;
+    this.flippedH = false;
+    this.flippedV = false;
     this.lastCursor = null;
+    this.refreshTemplate();
     this._overlaps = false;
     this._snapped = false;
     store.currentCanvas.clearScratch();
@@ -53,22 +60,29 @@ export class DrawPlaceBlock extends AbstractDrawFunction {
   }
 
   rotateCW(): void {
-    if (!this.template) return;
-    this.template = rotateLayer90CW(this.template);
-    this.bbox = layerBBox(this.template);
-    if (this.lastCursor) this.previewAt(this.lastCursor);
+    if (!this.baseTemplate) return;
+    this.rotation = (this.rotation + 1) % 4;
+    this.refreshTemplate();
   }
 
   flipH(): void {
-    if (!this.template) return;
-    this.template = flipLayerH(this.template);
-    this.bbox = layerBBox(this.template);
-    if (this.lastCursor) this.previewAt(this.lastCursor);
+    if (!this.baseTemplate) return;
+    this.flippedH = !this.flippedH;
+    this.refreshTemplate();
   }
 
   flipV(): void {
-    if (!this.template) return;
-    this.template = flipLayerV(this.template);
+    if (!this.baseTemplate) return;
+    this.flippedV = !this.flippedV;
+    this.refreshTemplate();
+  }
+
+  private refreshTemplate(): void {
+    if (!this.baseTemplate) return;
+    let template = rotatePlacementLayer(this.baseTemplate, this.rotation);
+    if (this.flippedH) template = flipLayerH(template);
+    if (this.flippedV) template = flipLayerV(template);
+    this.template = template;
     this.bbox = layerBBox(this.template);
     if (this.lastCursor) this.previewAt(this.lastCursor);
   }
@@ -99,7 +113,11 @@ export class DrawPlaceBlock extends AbstractDrawFunction {
   }
 
   cancel(): void {
+    this.baseTemplate = null;
     this.template = null;
+    this.rotation = 0;
+    this.flippedH = false;
+    this.flippedV = false;
     this.bbox = null;
     this.lastCursor = null;
     this._overlaps = false;
