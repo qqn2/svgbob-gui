@@ -262,7 +262,7 @@ function ensureStableDomHandlers(win: AsciiflowWindow) {
       }
       if (store.toolMode() === ToolMode.RAW) {
         e.preventDefault();
-        e.clipboardData!.setData("text/plain", store.rawTool.cutCurrentLine());
+        e.clipboardData!.setData("text/plain", store.rawTool.cutAtCursor());
       }
     };
     win.__asciiflowOnPaste = (e) => {

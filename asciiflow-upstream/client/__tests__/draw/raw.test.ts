@@ -102,17 +102,29 @@ describe("DrawRaw", () => {
     expect(store.rawTool.currentPosition).toEqual(new Vector(1, 1));
   });
 
-  it("cuts the current line for editor-style ctrl+x handling", () => {
-    store.currentCanvas.committed = textToLayer(["AAA", "B B", "CCC"].join("\n"), new Vector(0, 0));
+  it("cuts only the character at the raw cursor and closes the gap", () => {
+    store.currentCanvas.committed = textToLayer(["AAA", "BCD", "CCC"].join("\n"), new Vector(0, 0));
 
     store.rawTool.start(new Vector(1, 1));
-    const cutText = store.rawTool.cutCurrentLine();
+    const cutText = store.rawTool.cutAtCursor();
 
-    expect(cutText).toBe("B B");
-    expect(store.currentCanvas.committed.get(new Vector(0, 1))).toBeNull();
+    expect(cutText).toBe("C");
+    expect(store.currentCanvas.committed.get(new Vector(0, 1))).toBe("B");
+    expect(store.currentCanvas.committed.get(new Vector(1, 1))).toBe("D");
     expect(store.currentCanvas.committed.get(new Vector(2, 1))).toBeNull();
     expect(store.currentCanvas.committed.get(new Vector(0, 0))).toBe("A");
     expect(store.currentCanvas.committed.get(new Vector(0, 2))).toBe("C");
-    expect(store.rawTool.currentPosition).toEqual(new Vector(0, 1));
+    expect(store.rawTool.currentPosition).toEqual(new Vector(1, 1));
+  });
+
+  it("returns an empty cut without changing a blank raw cursor cell", () => {
+    store.currentCanvas.committed = textToLayer("AB", new Vector(0, 0));
+
+    store.rawTool.start(new Vector(3, 0));
+    const cutText = store.rawTool.cutAtCursor();
+
+    expect(cutText).toBe("");
+    expect(layerToText(store.currentCanvas.committed)).toBe("AB");
+    expect(store.rawTool.currentPosition).toEqual(new Vector(3, 0));
   });
 });
