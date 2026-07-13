@@ -682,6 +682,21 @@ function HelpContent() {
           </div>
         </section>
       </div>
+
+      <div className={styles.helpLegal}>
+        <span>
+          Independent community project; not affiliated with or endorsed by
+          svgbob or ASCIIFlow maintainers.
+        </span>
+        <a
+          className={styles.helpLink}
+          href={`${import.meta.env.BASE_URL}licenses/THIRD-PARTY-NOTICES.txt`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Licenses and notices
+        </a>
+      </div>
     </div>
   );
 }

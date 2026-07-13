@@ -129,13 +129,18 @@ The Vite application root is `asciiflow-upstream/client/`. The main pieces are:
 
 ## Attribution
 
+This is an independent community project and is not affiliated with or
+endorsed by the svgbob or ASCIIFlow maintainers.
+
 This project includes a modified, vendored copy of
 [ASCIIFlow](https://github.com/lewish/asciiflow), originally created by Lewis
 Hemens and distributed under the MIT License. SVG rendering is provided by
 [svgbob-wasm](https://github.com/agoose77/svgbob-wasm), which wraps svgbob and
-is distributed under the Apache-2.0 license.
+whose installed package declares the Apache-2.0 license. The upstream
+svgbob-wasm repository also includes an MIT license.
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
+Deployed builds include the applicable texts under `/licenses/`.
 
 ## License
 
