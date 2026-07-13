@@ -14,6 +14,8 @@ or cloud database.
 ## Features
 
 - Draw boxes, lines, arrows, freeform characters, and quoted text on a grid.
+- Edit the complete ASCII source in Raw mode with line numbers, selections,
+  native clipboard controls, and editor undo/redo.
 - Move and resize selections with keyboard-friendly editing controls.
 - Place reusable flowchart, logic, clock/reset, memory, and interface blocks.
 - Scale blocks to 1x, 2x, or 3x before placement.
@@ -121,7 +123,8 @@ headers and static assets.
 The Vite application root is `asciiflow-upstream/client/`. The main pieces are:
 
 - `store/` and `layer.ts`: sparse ASCII canvas and undo/redo history.
-- `draw/`: box, line, arrow, text, raw, select, erase, and block placement tools.
+- `draw/`: box, line, arrow, text, select, erase, and block placement tools.
+- `RawEditor.tsx`: lazy-loaded CodeMirror source editor used by Raw mode.
 - `lib/snippets/`: reusable block definitions and parameter handling.
 - `renderer.ts`: browser-side `svgbob-wasm` rendering.
 - `svg_preview.tsx` and `ExportDialog.tsx`: preview and export workflows.
@@ -138,6 +141,9 @@ Hemens and distributed under the MIT License. SVG rendering is provided by
 [svgbob-wasm](https://github.com/agoose77/svgbob-wasm), which wraps svgbob and
 whose installed package declares the Apache-2.0 license. The upstream
 svgbob-wasm repository also includes an MIT license.
+
+Raw mode is powered by [CodeMirror](https://codemirror.net/), distributed
+under the MIT License.
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
 Deployed builds include the applicable texts under `/licenses/`.

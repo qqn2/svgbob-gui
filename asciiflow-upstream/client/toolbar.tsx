@@ -24,6 +24,10 @@ import {
   parseDrawingBackup,
   serializeDrawingBackup,
 } from "#asciiflow/client/drawing_backup";
+import {
+  redoRawEditor,
+  undoRawEditor,
+} from "#asciiflow/client/raw_editor_bridge";
 
 // ---------------------------------------------------------------------------
 // Which panel owns the second row (singleton — only one at a time)
@@ -183,14 +187,26 @@ export function Toolbar() {
           <ToolbarGroup>
             <ActionBtn
               color="var(--color-success)"
-              onClick={() => store.currentCanvas.undo()}
+              onClick={() => {
+                if (selectedToolMode === ToolMode.RAW) {
+                  undoRawEditor();
+                } else {
+                  store.currentCanvas.undo();
+                }
+              }}
               title="Undo"
             >
               undo
             </ActionBtn>
             <ActionBtn
               color="var(--color-danger)"
-              onClick={() => store.currentCanvas.redo()}
+              onClick={() => {
+                if (selectedToolMode === ToolMode.RAW) {
+                  redoRawEditor();
+                } else {
+                  store.currentCanvas.redo();
+                }
+              }}
               title="Redo"
             >
               redo
@@ -660,8 +676,8 @@ function HelpContent() {
             <HelpTool tone="danger" title="erase" detail="Drag over cells to clear them.">
               <Kbd>alt+8</Kbd>
             </HelpTool>
-            <HelpTool tone="accent" title="raw" detail="Edit the canvas like text: arrows move, typing inserts, delete/backspace close gaps.">
-              <Kbd>alt+9</Kbd><Kbd>arrows</Kbd><Kbd>enter</Kbd>
+            <HelpTool tone="accent" title="raw" detail="Full ASCII source editor with line numbers, selection, and native clipboard behavior.">
+              <Kbd>alt+9</Kbd><Kbd>{cmd}+z</Kbd><Kbd>{cmd}+f</Kbd>
             </HelpTool>
           </div>
         </section>

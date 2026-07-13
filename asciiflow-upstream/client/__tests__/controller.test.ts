@@ -37,11 +37,11 @@ describe("Controller keyboard dispatch", () => {
       altPressed: false,
       currentCursor: "default",
       modifierKeys: {},
+      cursorCell: null,
       canvasVersion: 0,
     });
     store.currentCanvas.clear();
     store.textTool.cleanup();
-    store.rawTool.cleanup();
   });
 
   it("identifies native editable targets for keyboard and clipboard handlers", () => {
@@ -66,19 +66,19 @@ describe("Controller keyboard dispatch", () => {
     });
   });
 
-  it("dispatches arrow keys once from keydown", () => {
+  it("leaves raw editor keys to its contenteditable surface", () => {
     store.setToolMode(ToolMode.RAW);
-    store.rawTool.start(new Vector(1, 0));
-    const spy = vi.spyOn(store.rawTool, "handleKey");
+    const spy = vi.spyOn(store.nullTool, "handleKey");
+    const editor = {
+      tagName: "DIV",
+      isContentEditable: true,
+    } as HTMLDivElement;
 
-    controller.handleKeyDown(keyDown("ArrowLeft", { keyCode: 37 }));
+    controller.handleKeyDown(
+      keyDown("ArrowLeft", { keyCode: 37, target: editor })
+    );
 
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledWith("<left>", {
-      ctrl: false,
-      shift: false,
-      meta: false,
-    });
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it("ignores printable keys while ctrl is held", () => {
@@ -132,27 +132,6 @@ describe("Controller keyboard dispatch", () => {
     expect(del.preventDefault).toHaveBeenCalled();
   });
 
-  it("keeps backspace/delete editable in raw mode", () => {
-    store.setToolMode(ToolMode.RAW);
-    store.rawTool.start(new Vector(1, 0));
-    const spy = vi.spyOn(store.rawTool, "handleKey");
-
-    controller.handleKeyDown(keyDown("Backspace", { keyCode: 8 }));
-    controller.handleKeyDown(keyDown("Delete", { keyCode: 46 }));
-
-    expect(store.selectedToolMode).toBe(ToolMode.RAW);
-    expect(spy).toHaveBeenCalledWith("<backspace>", {
-      ctrl: false,
-      shift: false,
-      meta: false,
-    });
-    expect(spy).toHaveBeenCalledWith("<delete>", {
-      ctrl: false,
-      shift: false,
-      meta: false,
-    });
-  });
-
   it("cancels transient state with escape", () => {
     store.setToolMode(ToolMode.SELECT);
     const box = new Box(new Vector(0, 0), new Vector(1, 1));
@@ -172,6 +151,7 @@ describe("Controller keyboard dispatch", () => {
   });
 
   it("cancels block placement with escape even when a blocks input has focus", () => {
+    store.setCursorCell({ x: 0, y: 0 });
     store.placeBlockTool.begin("+--+\n|  |\n+--+");
     expect(store.placeBlockTool.isActive).toBe(true);
     expect(store.currentCanvas.scratch.size()).toBeGreaterThan(0);

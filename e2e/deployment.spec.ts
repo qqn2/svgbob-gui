@@ -56,6 +56,35 @@ test("persists editing across reload and supports undo and redo", async ({ page 
   await expect.poll(() => committedText(page)).toBe(drawn);
 });
 
+test("edits raw ASCII in a real editor and commits one canvas undo step", async ({ page }) => {
+  await openCleanEditor(page);
+  await page.getByTestId("tool-raw").click();
+
+  const editor = page.getByRole("textbox", { name: "Raw ASCII source" });
+  await expect(editor).toBeVisible();
+  await expect(page.locator("#ascii-canvas")).toHaveCount(0);
+
+  await editor.fill("ABCD");
+  await expect.poll(() => committedText(page)).toBe("ABCD");
+  await expect(page.getByLabel("svgbob SVG preview").locator("svg")).toBeVisible();
+
+  await editor.press("Home");
+  await editor.press("ArrowRight");
+  await editor.press("Shift+ArrowRight");
+  await editor.press("Control+x");
+  await expect.poll(() => committedText(page)).toBe("ACD");
+
+  await editor.press("Control+z");
+  await expect.poll(() => committedText(page)).toBe("ABCD");
+
+  await page.getByTestId("tool-boxes").click();
+  await expect(page.locator("#ascii-canvas")).toBeVisible();
+  await page.getByTitle("Undo").click();
+  await expect.poll(() => committedText(page)).toBe("");
+  await page.getByTitle("Redo").click();
+  await expect.poll(() => committedText(page)).toBe("ABCD");
+});
+
 test("places a 3x pipeline and downloads its SVG", async ({ page }) => {
   await openCleanEditor(page);
   await page.getByTestId("snippets-button").click();

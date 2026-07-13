@@ -1,0 +1,55 @@
+.rawEditor {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--color-canvas-bg);
+}
+
+.editorBar {
+  flex: 0 0 32px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  min-width: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-raised);
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: calc(12px * var(--ui-font-scale));
+}
+
+.fileTab {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 var(--space-lg);
+  border-right: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  background: var(--color-canvas-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+.editorStats {
+  align-self: center;
+  padding: 0 var(--space-lg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editorMount {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 680px) {
+  .editorStats {
+    display: none;
+  }
+}

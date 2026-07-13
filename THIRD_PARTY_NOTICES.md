@@ -34,6 +34,17 @@ The Apache-2.0 license does not grant permission to use third-party trade
 names, trademarks, service marks, or product names except for customary
 attribution and identification.
 
+## CodeMirror
+
+Raw source editing uses [CodeMirror](https://codemirror.net/) and the installed
+`@codemirror/commands`, `@codemirror/state`, and `@codemirror/view` packages.
+
+Copyright (C) 2018-2021 by Marijn Haverbeke and others
+
+These packages are distributed under the MIT License. They carry the same
+license text, preserved for production distribution at
+[`CodeMirror-MIT.txt`](asciiflow-upstream/client/public/licenses/CodeMirror-MIT.txt).
+
 ## svgbob GUI
 
 Original svgbob GUI code is distributed under the MIT License. The source

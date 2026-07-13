@@ -260,10 +260,6 @@ function ensureStableDomHandlers(win: AsciiflowWindow) {
         store.selectTool.cutSelection();
         return;
       }
-      if (store.toolMode() === ToolMode.RAW) {
-        e.preventDefault();
-        e.clipboardData!.setData("text/plain", store.rawTool.cutAtCursor());
-      }
     };
     win.__asciiflowOnPaste = (e) => {
       if (isEditableTarget(e.target)) {

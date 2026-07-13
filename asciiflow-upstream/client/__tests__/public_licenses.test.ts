@@ -19,6 +19,7 @@ describe("production license assets", () => {
       "svgbob-and-svgbob-wasm-APACHE-2.0.txt",
     ],
     ["node_modules/svgbob-wasm/LICENSE_MIT", "svgbob-wasm-MIT.txt"],
+    ["node_modules/codemirror/LICENSE", "CodeMirror-MIT.txt"],
   ])("ships an exact copy of %s", (source, publicName) => {
     expect(readFileSync(resolve(licensesDir, publicName))).toEqual(bytes(source));
   });

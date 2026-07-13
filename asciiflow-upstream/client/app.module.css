@@ -62,6 +62,16 @@
   overflow: hidden;
 }
 
+.rawEditorLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-canvas-bg);
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+}
+
 @media (max-width: 860px) {
   .workbench {
     position: relative;
