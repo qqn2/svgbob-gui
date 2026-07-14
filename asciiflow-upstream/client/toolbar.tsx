@@ -619,6 +619,9 @@ function DrawPanel() {
 // Help content
 // ---------------------------------------------------------------------------
 
+const BUG_REPORT_URL =
+  "https://github.com/qqn2/svgbob-gui/issues/new?template=bug_report.yml";
+
 function HelpContent() {
   const route = useAppStore((s) => s.route);
   const isShared = Boolean(route.shareSpec);
@@ -634,6 +637,14 @@ function HelpContent() {
         <div className={styles.helpHeroActions}>
           <span><Kbd>diagram.txt</Kbd> source</span>
           <span><Kbd>.svg</Kbd> export</span>
+          <a
+            className={styles.helpReportLink}
+            href={BUG_REPORT_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report a bug
+          </a>
         </div>
       </div>
 

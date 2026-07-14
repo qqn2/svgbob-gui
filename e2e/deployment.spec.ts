@@ -35,6 +35,19 @@ test("starts with an empty canvas and a ready WASM renderer", async ({ page }) =
   expect(await committedText(page)).toBe("");
 });
 
+test("links Help directly to the GitHub bug report form", async ({ page }) => {
+  await openCleanEditor(page);
+  await page.getByRole("button", { name: "help", exact: true }).click();
+
+  const reportLink = page.getByRole("link", { name: "Report a bug" });
+  await expect(reportLink).toBeVisible();
+  await expect(reportLink).toHaveAttribute(
+    "href",
+    "https://github.com/qqn2/svgbob-gui/issues/new?template=bug_report.yml",
+  );
+  await expect(reportLink).toHaveAttribute("target", "_blank");
+});
+
 test("persists editing across reload and supports undo and redo", async ({ page }) => {
   await openCleanEditor(page);
   await page.getByTestId("tool-boxes").click();

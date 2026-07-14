@@ -527,10 +527,34 @@
 .helpHeroActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-sm);
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.helpReportLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.helpReportLink:hover,
+.helpReportLink:focus-visible {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+}
+
+.helpReportLink:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .helpColumns {

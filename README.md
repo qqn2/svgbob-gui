@@ -89,6 +89,14 @@ npx playwright install chromium firefox
 See [CONTRIBUTING.md](CONTRIBUTING.md) for project structure, block-review
 routes, and pull-request expectations.
 
+### Support and feedback
+
+Use the **Report a bug** action in the app's Help panel or open the
+[GitHub bug report form](https://github.com/qqn2/svgbob-gui/issues/new?template=bug_report.yml).
+Reduce diagrams to generic ASCII before posting; do not attach confidential
+schematics or proprietary signal names. Report security vulnerabilities
+privately through [GitHub Security Advisories](https://github.com/qqn2/svgbob-gui/security/advisories/new).
+
 ### Block review workspace
 
 The app includes a development-only visual QA workspace for checking every
