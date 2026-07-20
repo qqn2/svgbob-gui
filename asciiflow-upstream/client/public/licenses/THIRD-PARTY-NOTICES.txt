@@ -1,0 +1,40 @@
+THIRD-PARTY NOTICES
+
+svgbob GUI is an independent community project. It is not affiliated with or
+endorsed by the svgbob or ASCIIFlow maintainers. Third-party names are used
+only to identify the software this project modifies or uses.
+
+ASCIIFlow
+---------
+This application contains a modified, vendored copy of ASCIIFlow.
+Copyright (c) 2021 Lewis Hemens.
+ASCIIFlow is distributed under the MIT License. See ASCIIFlow-MIT.txt.
+
+svgbob and svgbob-wasm
+----------------------
+SVG rendering uses svgbob-wasm, a WebAssembly wrapper around svgbob. svgbob is
+distributed under Apache-2.0. The installed svgbob-wasm package also declares
+Apache-2.0, and its upstream repository includes an MIT license. See
+svgbob-and-svgbob-wasm-APACHE-2.0.txt and svgbob-wasm-MIT.txt.
+
+The Apache-2.0 license does not grant permission to use third-party trade
+names, trademarks, service marks, or product names except for customary
+attribution and identification.
+
+CodeMirror
+----------
+Raw source editing uses CodeMirror and the @codemirror/commands,
+@codemirror/state, and @codemirror/view packages. Copyright (C) 2018-2021 by
+Marijn Haverbeke and others. These packages are distributed under the MIT
+License and carry the same license text. See CodeMirror-MIT.txt.
+
+svgbob GUI
+----------
+Original svgbob GUI code is distributed under the MIT License. See
+PROJECT-MIT.txt.
+
+Other npm dependencies
+----------------------
+Additional runtime and development dependencies are listed in package.json
+and package-lock.json. Their licenses and copyright notices remain the
+property of their respective authors.

@@ -14,6 +14,8 @@ or cloud database.
 ## Features
 
 - Draw boxes, lines, arrows, freeform characters, and quoted text on a grid.
+- Edit the complete ASCII source in Raw mode with line numbers, selections,
+  native clipboard controls, and editor undo/redo.
 - Move and resize selections with keyboard-friendly editing controls.
 - Place reusable flowchart, logic, clock/reset, memory, and interface blocks.
 - Scale blocks to 1x, 2x, or 3x before placement.
@@ -87,6 +89,30 @@ npx playwright install chromium firefox
 See [CONTRIBUTING.md](CONTRIBUTING.md) for project structure, block-review
 routes, and pull-request expectations.
 
+### Support and feedback
+
+Use the **Report a bug** action in the app's Help panel or open the
+[GitHub bug report form](https://github.com/qqn2/svgbob-gui/issues/new?template=bug_report.yml).
+Reduce diagrams to generic ASCII before posting; do not attach confidential
+schematics or proprietary signal names. Report security vulnerabilities
+privately through [GitHub Security Advisories](https://github.com/qqn2/svgbob-gui/security/advisories/new).
+
+### Block review workspace
+
+The app includes a development-only visual QA workspace for checking every
+reusable block after editing snippets or scaling logic. Start `npm run dev`,
+then open:
+
+- `http://127.0.0.1:5173/#/review/blocks/1/inspect`
+- `http://127.0.0.1:5173/#/review/blocks/2/inspect`
+- `http://127.0.0.1:5173/#/review/blocks/3/inspect`
+
+Each inspector compares the scaled ASCII source with its svgbob render and
+records OK/Not OK notes for CSV export. Remove `/inspect` to place the complete
+block library on the normal canvas at that scale. These routes are deliberately
+excluded from production builds; see [CONTRIBUTING.md](CONTRIBUTING.md) for the
+authoring rules and review checklist.
+
 ## Deployment
 
 The repository supports an assets-only Cloudflare Worker:
@@ -105,7 +131,8 @@ headers and static assets.
 The Vite application root is `asciiflow-upstream/client/`. The main pieces are:
 
 - `store/` and `layer.ts`: sparse ASCII canvas and undo/redo history.
-- `draw/`: box, line, arrow, text, raw, select, erase, and block placement tools.
+- `draw/`: box, line, arrow, text, select, erase, and block placement tools.
+- `RawEditor.tsx`: lazy-loaded CodeMirror source editor used by Raw mode.
 - `lib/snippets/`: reusable block definitions and parameter handling.
 - `renderer.ts`: browser-side `svgbob-wasm` rendering.
 - `svg_preview.tsx` and `ExportDialog.tsx`: preview and export workflows.
@@ -113,13 +140,21 @@ The Vite application root is `asciiflow-upstream/client/`. The main pieces are:
 
 ## Attribution
 
+This is an independent community project and is not affiliated with or
+endorsed by the svgbob or ASCIIFlow maintainers.
+
 This project includes a modified, vendored copy of
 [ASCIIFlow](https://github.com/lewish/asciiflow), originally created by Lewis
 Hemens and distributed under the MIT License. SVG rendering is provided by
 [svgbob-wasm](https://github.com/agoose77/svgbob-wasm), which wraps svgbob and
-is distributed under the Apache-2.0 license.
+whose installed package declares the Apache-2.0 license. The upstream
+svgbob-wasm repository also includes an MIT license.
+
+Raw mode is powered by [CodeMirror](https://codemirror.net/), distributed
+under the MIT License.
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
+Deployed builds include the applicable texts under `/licenses/`.
 
 ## License
 

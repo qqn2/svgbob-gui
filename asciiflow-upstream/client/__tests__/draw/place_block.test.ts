@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { DrawingId, store, ToolMode, useAppStore } from "#asciiflow/client/store";
 import { Vector } from "#asciiflow/client/vector";
+import { layerToText } from "#asciiflow/client/text_utils";
 
 describe("DrawPlaceBlock", () => {
   let testId = 0;
@@ -39,5 +40,19 @@ describe("DrawPlaceBlock", () => {
     expect(store.currentCanvas.committed.get(new Vector(4, 5))).toBe("X");
     expect(store.currentCanvas.scratch.size()).toBeGreaterThan(0);
     expect(store.placeBlockTool.isActive).toBe(true);
+  });
+
+  it("regenerates transforms from the original block without drift", () => {
+    const source = '+-------+\n|"LABEL"|\n+-------+';
+    store.placeBlockTool.begin(source);
+
+    for (let i = 0; i < 4; i++) store.placeBlockTool.rotateCW();
+    store.placeBlockTool.flipH();
+    store.placeBlockTool.flipH();
+    store.placeBlockTool.flipV();
+    store.placeBlockTool.flipV();
+    store.placeBlockTool.previewAt(new Vector(0, 0));
+
+    expect(layerToText(store.currentCanvas.scratch)).toBe(source);
   });
 });

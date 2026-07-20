@@ -3,6 +3,13 @@ import styles from "#asciiflow/client/app.module.css";
 import { PaneResizer } from "#asciiflow/client/PaneResizer";
 import { SvgPreview } from "#asciiflow/client/svg_preview";
 import { View } from "#asciiflow/client/view";
+import { ToolMode, useAppStore } from "#asciiflow/client/store";
+
+const RawEditor = React.lazy(() =>
+  import("#asciiflow/client/RawEditor").then((module) => ({
+    default: module.RawEditor,
+  }))
+);
 
 const SPLIT_KEY = "svgbob-gui:split-percent";
 
@@ -20,6 +27,7 @@ export function Workspace(
   viewProps: React.HTMLAttributes<HTMLCanvasElement>
 ) {
   const [split, setSplit] = React.useState(loadSplit);
+  const selectedToolMode = useAppStore((state) => state.selectedToolMode);
 
   const onSplitChange = React.useCallback((pct: number) => {
     setSplit(pct);
@@ -37,7 +45,19 @@ export function Workspace(
         className={styles.canvasPane}
         style={{ flex: `0 0 ${split}%` }}
       >
-        <View {...viewProps} />
+        {selectedToolMode === ToolMode.RAW ? (
+          <React.Suspense
+            fallback={
+              <div className={styles.rawEditorLoading} role="status">
+                Loading editor…
+              </div>
+            }
+          >
+            <RawEditor />
+          </React.Suspense>
+        ) : (
+          <View {...viewProps} />
+        )}
       </div>
       <PaneResizer onSplitChange={onSplitChange} />
       <div className={styles.previewPane} style={{ flex: `1 1 ${100 - split}%` }}>

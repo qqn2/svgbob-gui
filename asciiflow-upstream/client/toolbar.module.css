@@ -527,10 +527,34 @@
 .helpHeroActions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-sm);
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+.helpReportLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-accent);
+  border-radius: 4px;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.helpReportLink:hover,
+.helpReportLink:focus-visible {
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
+}
+
+.helpReportLink:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .helpColumns {
@@ -700,6 +724,17 @@
 
 .helpLink:hover {
   opacity: 0.7;
+}
+
+.helpLegal {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-lg);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-muted);
+  font-size: calc(11px * var(--ui-font-scale, 1));
 }
 
 @media (max-width: 980px) {

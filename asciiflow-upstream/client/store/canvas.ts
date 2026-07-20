@@ -192,6 +192,26 @@ export class CanvasStore {
     this.notify();
   }
 
+  /** Persist a live editor value without adding per-keystroke canvas history. */
+  replaceCommittedTransient(value: Layer) {
+    this._committed = value;
+    writePersistent(this.committedKey, value, Layer);
+    this._redoLayers = [];
+    writePersistent(this.redoKey, this._redoLayers, new ArrayStringifier(Layer));
+    this.notify();
+  }
+
+  /** Record one undo checkpoint after a transient editor session finishes. */
+  finishTransientEdit(previous: Layer) {
+    const undoLayer = replacementPatch(this._committed, previous);
+    if (undoLayer.size() === 0) return;
+    this._undoLayers = [...this._undoLayers, undoLayer];
+    writePersistent(this.undoKey, this._undoLayers, new ArrayStringifier(Layer));
+    this._redoLayers = [];
+    writePersistent(this.redoKey, this._redoLayers, new ArrayStringifier(Layer));
+    this.notify();
+  }
+
   get combined() {
     return new LayerView([this.committed, this._scratch]);
   }
@@ -281,4 +301,20 @@ export class CanvasStore {
     writePersistent(this.redoKey, this._redoLayers, new ArrayStringifier(Layer));
     this.notify();
   }
+}
+
+function replacementPatch(from: Layer, to: Layer): Layer {
+  const patch = new Layer();
+  for (const [position, value] of from.entries()) {
+    const replacement = to.get(position);
+    if (replacement !== value) {
+      patch.set(position, replacement ?? "");
+    }
+  }
+  for (const [position, value] of to.entries()) {
+    if (from.get(position) !== value) {
+      patch.set(position, value);
+    }
+  }
+  return patch;
 }

@@ -24,6 +24,10 @@ import {
   parseDrawingBackup,
   serializeDrawingBackup,
 } from "#asciiflow/client/drawing_backup";
+import {
+  redoRawEditor,
+  undoRawEditor,
+} from "#asciiflow/client/raw_editor_bridge";
 
 // ---------------------------------------------------------------------------
 // Which panel owns the second row (singleton — only one at a time)
@@ -183,14 +187,26 @@ export function Toolbar() {
           <ToolbarGroup>
             <ActionBtn
               color="var(--color-success)"
-              onClick={() => store.currentCanvas.undo()}
+              onClick={() => {
+                if (selectedToolMode === ToolMode.RAW) {
+                  undoRawEditor();
+                } else {
+                  store.currentCanvas.undo();
+                }
+              }}
               title="Undo"
             >
               undo
             </ActionBtn>
             <ActionBtn
               color="var(--color-danger)"
-              onClick={() => store.currentCanvas.redo()}
+              onClick={() => {
+                if (selectedToolMode === ToolMode.RAW) {
+                  redoRawEditor();
+                } else {
+                  store.currentCanvas.redo();
+                }
+              }}
               title="Redo"
             >
               redo
@@ -603,6 +619,9 @@ function DrawPanel() {
 // Help content
 // ---------------------------------------------------------------------------
 
+const BUG_REPORT_URL =
+  "https://github.com/qqn2/svgbob-gui/issues/new?template=bug_report.yml";
+
 function HelpContent() {
   const route = useAppStore((s) => s.route);
   const isShared = Boolean(route.shareSpec);
@@ -618,6 +637,14 @@ function HelpContent() {
         <div className={styles.helpHeroActions}>
           <span><Kbd>diagram.txt</Kbd> source</span>
           <span><Kbd>.svg</Kbd> export</span>
+          <a
+            className={styles.helpReportLink}
+            href={BUG_REPORT_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report a bug
+          </a>
         </div>
       </div>
 
@@ -660,8 +687,8 @@ function HelpContent() {
             <HelpTool tone="danger" title="erase" detail="Drag over cells to clear them.">
               <Kbd>alt+8</Kbd>
             </HelpTool>
-            <HelpTool tone="accent" title="raw" detail="Edit the canvas like text: arrows move, typing inserts, delete/backspace close gaps.">
-              <Kbd>alt+9</Kbd><Kbd>arrows</Kbd><Kbd>enter</Kbd>
+            <HelpTool tone="accent" title="raw" detail="Full ASCII source editor with line numbers, selection, and native clipboard behavior.">
+              <Kbd>alt+9</Kbd><Kbd>{cmd}+z</Kbd><Kbd>{cmd}+f</Kbd>
             </HelpTool>
           </div>
         </section>
@@ -681,6 +708,21 @@ function HelpContent() {
             <HelpShortcut keys="alt" detail="show tool shortcuts" />
           </div>
         </section>
+      </div>
+
+      <div className={styles.helpLegal}>
+        <span>
+          Independent community project; not affiliated with or endorsed by
+          svgbob or ASCIIFlow maintainers.
+        </span>
+        <a
+          className={styles.helpLink}
+          href={`${import.meta.env.BASE_URL}licenses/THIRD-PARTY-NOTICES.txt`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Licenses and notices
+        </a>
       </div>
     </div>
   );

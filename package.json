@@ -23,6 +23,10 @@
     "check": "npm run typecheck && npm run test && npm run security-check && npm run build"
   },
   "dependencies": {
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
+    "codemirror": "^6.0.2",
     "js-base64": "^3.7.7",
     "pako": "^1.0.11",
     "react": "^16.14.0",
