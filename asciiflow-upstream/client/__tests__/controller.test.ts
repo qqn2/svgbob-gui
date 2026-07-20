@@ -28,6 +28,7 @@ describe("Controller keyboard dispatch", () => {
   let testId = 0;
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     controller = new Controller();
     localStorage.clear();
     useAppStore.setState({

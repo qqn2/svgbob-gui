@@ -4,7 +4,7 @@ import {
   MAX_SHARED_DRAWING_ENCODED_BYTES,
 } from "#asciiflow/client/store/drawing_stringifier";
 import { Base64 } from "js-base64";
-import pako from "pako";
+import * as pako from "pako";
 
 describe("DrawingStringifier shared input limits", () => {
   it("rejects oversized encoded drawings before decompression", () => {

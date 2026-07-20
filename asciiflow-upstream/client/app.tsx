@@ -25,8 +25,8 @@ import {
 } from "#asciiflow/client/block_review";
 import { BlockReviewInspector } from "#asciiflow/client/BlockReviewInspector";
 
-import { HashRouter, Route, useParams } from "react-router-dom";
-import * as ReactDOM from "react-dom";
+import { HashRouter, Route, Routes, useParams } from "react-router-dom";
+import { createRoot, type Root } from "react-dom/client";
 import { Vector } from "#asciiflow/client/vector";
 import { layerToText, textToLayer } from "#asciiflow/client/text_utils";
 import { CHAR_PIXELS_H, CHAR_PIXELS_V } from "#asciiflow/client/constants";
@@ -42,6 +42,7 @@ interface AsciiflowHandlerHost {
   controller: Controller;
   inputController: InputController;
   installed: boolean;
+  reactRoot?: Root;
 }
 
 type AsciiflowWindow = Window &
@@ -76,7 +77,7 @@ export interface IRouteProps {
 }
 
 function BlockReviewInspectorRoute() {
-  const { reviewScale } = useParams<IRouteProps>();
+  const { reviewScale } = useParams<keyof IRouteProps>();
   return <BlockReviewInspector scale={Number(reviewScale || "2")} />;
 }
 
@@ -103,7 +104,7 @@ function decodeRouteValue(value: string): string | null {
 }
 
 export const App = () => {
-  const routeProps = useParams<IRouteProps>();
+  const routeProps = useParams<keyof IRouteProps>();
   const themeMode = useAppStore((s) => s.themeMode);
   const [panel] = usePanel();
   const [routeError, setRouteError] = React.useState("");
@@ -194,21 +195,24 @@ export const App = () => {
 async function render() {
   const reviewRoutes = import.meta.env.DEV ? (
     <>
-      <Route exact path="/review/block/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
-      <Route exact path="/review/blocks/:reviewScale?/inspect" component={BlockReviewInspectorRoute} />
-      <Route exact path="/review/block/:reviewScale?" component={App} />
-      <Route exact path="/review/blocks/:reviewScale?" component={App} />
+      <Route path="/review/block/:reviewScale?/inspect" element={<BlockReviewInspectorRoute />} />
+      <Route path="/review/blocks/:reviewScale?/inspect" element={<BlockReviewInspectorRoute />} />
+      <Route path="/review/block/:reviewScale?" element={<App />} />
+      <Route path="/review/blocks/:reviewScale?" element={<App />} />
     </>
   ) : null;
-  ReactDOM.render(
+  const host = handlerHost();
+  host.reactRoot ??= createRoot(document.getElementById("root")!);
+  host.reactRoot.render(
     <HashRouter>
-      <Route exact path="/" component={App} />
-      {reviewRoutes}
-      <Route path="/local/:local" component={App} />
-      <Route path="/share/:share" component={App} />
-      <Route path="/bob/:encoded" component={App} />
+      <Routes>
+        <Route path="/" element={<App />} />
+        {reviewRoutes}
+        <Route path="/local/:local" element={<App />} />
+        <Route path="/share/:share" element={<App />} />
+        <Route path="/bob/:encoded" element={<App />} />
+      </Routes>
     </HashRouter>,
-    document.getElementById("root")
   );
 }
 

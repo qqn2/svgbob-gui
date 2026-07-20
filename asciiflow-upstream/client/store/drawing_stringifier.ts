@@ -4,7 +4,7 @@ import {
   JSONStringifier,
 } from "#asciiflow/common/stringifiers";
 import { Base64 } from "js-base64";
-import pako from "pako";
+import * as pako from "pako";
 
 export const MAX_SHARED_DRAWING_ENCODED_BYTES = 100_000;
 const MAX_SHARED_DRAWING_INFLATED_BYTES = 2_000_000;

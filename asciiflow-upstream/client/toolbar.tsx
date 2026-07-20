@@ -19,7 +19,7 @@ import {
 import styles from "#asciiflow/client/toolbar.module.css";
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
-import { useHistory } from "react-router";
+import { useNavigate } from "react-router-dom";
 import {
   parseDrawingBackup,
   serializeDrawingBackup,
@@ -786,7 +786,6 @@ function HelpTool({
 // ---------------------------------------------------------------------------
 
 function FilePanel() {
-  const history = useHistory();
   const route = useAppStore((s) => s.route);
   const localDrawingIds = useAppStore((s) => s.localDrawingIds);
   const canvasVersion = useAppStore((s) => s.canvasVersion);
@@ -868,7 +867,7 @@ function FileRow({
   drawingId: DrawingId;
   active: boolean;
 }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [renaming, setRenaming] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const renameRef = useRef<HTMLInputElement>(null);
@@ -892,14 +891,14 @@ function FileRow({
     const newName = renameRef.current.value.trim();
     if (newName && newName !== name && isValidDrawingName(newName)) {
       store.renameDrawing(drawingId.localId, newName);
-      history.push(DrawingId.local(newName).href);
+      navigate(DrawingId.local(newName).href);
     }
     setRenaming(false);
   }
 
   function handleDelete() {
     store.deleteDrawing(drawingId);
-    history.push(
+    navigate(
       store.drawings.length > 0
         ? store.drawings[0].href
         : DrawingId.local(null).href
@@ -931,7 +930,7 @@ function FileRow({
           className={styles.fileRowName}
           style={active ? { fontWeight: "bold" } : undefined}
           onClick={(e) => {
-            history.push(drawingId.href);
+            navigate(drawingId.href);
             e.preventDefault();
           }}
         >
@@ -994,7 +993,7 @@ function FileRow({
 // ---------------------------------------------------------------------------
 
 function NewDrawingRow() {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1025,7 +1024,7 @@ function NewDrawingRow() {
         ...store.localDrawingIds,
         DrawingId.local(name),
       ]);
-      history.push(DrawingId.local(name).href);
+      navigate(DrawingId.local(name).href);
     }
     setCreating(false);
   }
@@ -1059,7 +1058,7 @@ function NewDrawingRow() {
 }
 
 function ForkDrawingButton({ drawingId }: { drawingId: DrawingId }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const drawing = new DrawingStringifier().deserialize(drawingId.shareSpec);
   const defaultName = drawing.name;
   const [name, setName] = useState(defaultName);
@@ -1076,7 +1075,7 @@ function ForkDrawingButton({ drawingId }: { drawingId: DrawingId }) {
           variant="primary"
           onClick={() => {
             store.saveDrawing(drawingId, name);
-            history.push(DrawingId.local(name).href);
+            navigate(DrawingId.local(name).href);
           }}
         >
           fork
@@ -1135,7 +1134,7 @@ function SharedBanner({ drawingId }: { drawingId: DrawingId }) {
 }
 
 function ForkButton({ drawingId }: { drawingId: DrawingId }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const drawing = new DrawingStringifier().deserialize(drawingId.shareSpec);
   const defaultName = drawing.name;
   const [name, setName] = useState(defaultName);
@@ -1150,7 +1149,7 @@ function ForkButton({ drawingId }: { drawingId: DrawingId }) {
           variant="primary"
           onClick={() => {
             store.saveDrawing(drawingId, name);
-            history.push(DrawingId.local(name).href);
+            navigate(DrawingId.local(name).href);
           }}
         >
           fork

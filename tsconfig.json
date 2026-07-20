@@ -7,9 +7,8 @@
     "strict": true,
     "skipLibCheck": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
-      "#asciiflow/*": ["asciiflow-upstream/*"]
+      "#asciiflow/*": ["./asciiflow-upstream/*"]
     }
   },
   "include": ["asciiflow-upstream/client/**/*"],
