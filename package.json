@@ -29,8 +29,8 @@
     "codemirror": "^6.0.2",
     "js-base64": "^3.9.1",
     "pako": "^3.0.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.1",
     "svgbob-wasm": "^1.0.0",
     "zustand": "^5.0.14"
