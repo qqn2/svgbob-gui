@@ -23,23 +23,23 @@
     "check": "npm run typecheck && npm run test && npm run security-check && npm run build"
   },
   "dependencies": {
-    "@codemirror/commands": "^6.10.4",
-    "@codemirror/state": "^6.7.1",
-    "@codemirror/view": "^6.43.6",
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.11",
     "codemirror": "^6.0.2",
-    "js-base64": "^3.9.1",
+    "js-base64": "^3.9.3",
     "pako": "^3.0.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
     "svgbob-wasm": "^1.0.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@types/pako": "^1.0.7",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^7",
     "vite": "^8.1.5",
